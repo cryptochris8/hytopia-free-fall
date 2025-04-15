@@ -1,0 +1,100 @@
+<!-- Math Game UI -->
+<div id="math-game-ui" style="
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  min-width: 300px;
+">
+
+  <div id="problem" style="
+    font-size: 24px;
+    margin-bottom: 10px;
+  ">
+    What is 1 + 1?
+  </div>
+  
+  <div id="score" style="
+    font-size: 18px;
+    color: #4CAF50;
+  ">
+    Score: 0
+  </div>
+
+  <div id="input-area" style="
+    margin-top: 15px;
+  ">
+    <input type="number" id="answer-input" style="
+      padding: 5px;
+      font-size: 16px;
+      width: 100px;
+      text-align: center;
+      border: none;
+      border-radius: 5px;
+      margin-right: 10px;
+    ">
+    <button onclick="submitAnswer()" style="
+      padding: 5px 15px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    ">
+      Submit
+    </button>
+  </div>
+
+  <div id="feedback" style="
+    margin-top: 10px;
+    min-height: 20px;
+    font-size: 16px;
+  "></div>
+</div>
+
+<script>
+// Initialize Hytopia UI
+const answerInput = document.getElementById('answer-input');
+const feedbackDiv = document.getElementById('feedback');
+const problemDiv = document.getElementById('problem');
+const scoreDiv = document.getElementById('score');
+
+// Handle data from server
+hytopia.onData(data => {
+  if (data.type === 'problem') {
+    problemDiv.textContent = `What is ${data.num1} ${data.operation} ${data.num2}?`;
+    feedbackDiv.textContent = '';
+    answerInput.value = '';
+  } else if (data.type === 'score') {
+    scoreDiv.textContent = `Score: ${data.score}`;
+  } else if (data.type === 'feedback') {
+    feedbackDiv.textContent = data.message;
+    feedbackDiv.style.color = data.correct ? '#4CAF50' : '#f44336';
+  }
+});
+
+// Submit answer function
+function submitAnswer() {
+  const answer = parseInt(answerInput.value);
+  if (!isNaN(answer)) {
+    hytopia.sendData({
+      type: 'answer',
+      value: answer
+    });
+  }
+}
+
+// Also submit on enter key
+answerInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    submitAnswer();
+  }
+});
+</script> 
