@@ -20,15 +20,10 @@ This is the mobile version of the Free Fall Math game that automatically detects
 
 To run the mobile version of the game:
 
-```bash
-bun run mobile
-```
-
-Or if using npm:
-
-```bash
-npm run mobile
-```
+-download hytopia app
+-choose Free Fall game
+-choose server
+-select play game 
 
 ## Technical Details
 
