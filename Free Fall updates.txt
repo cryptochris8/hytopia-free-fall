@@ -1,0 +1,298 @@
+Free Fall updates
+
+1.	 On moderate and hard levels, Increasing the speed of fall between each correct answer to make the game more challenging.
+
+// --- Constants ---
+
+// Game Settings
+const GAME_RESET_DELAY_MS = 200; // Delay after answer before reset/next question
+const BACKGROUND_MUSIC_DELAY_MS = 15000; // Delay before background music starts
+
+// Player Settings
+const PLAYER_MOVE_SPEED = 5; // blocks per second
+// --- Speed and Gravity Scaling for Difficulty Levels ---
+const PLAYER_BASE_GRAVITY_SCALE = 0.1; // Original gravity scale
+const PLAYER_GRAVITY_INCREMENT = 0.05; // How much to increase gravity per correct answer
+const PLAYER_MAX_GRAVITY_SCALE = 0.5; // Maximum gravity scale allowed
+const PLAYER_MODEL_URI = 'models/players/player.gltf';
+// ... existing code ...
+
+// --- Player Game State ---
+// Define an interface for player-specific game state
+interface PlayerGameState {
+  score: number;
+  questionsPresented: number; // Renamed from questionsAsked
+  gameActive: boolean;
+  currentAnswer: number; // Store the correct answer for the current question
+  difficulty: 'beginner' | 'moderate' | 'hard'; // Add difficulty level
+  isFinalFall: boolean;
+  speedMultiplier: number; // NEW: Track the current speed multiplier for falling
+}
+
+// Store player game states in a map
+const playerGameStateMap = new Map<string, PlayerGameState>();
+
+// ... existing code ...
+
+class FallingPlayerController extends BaseEntityController {
+  private moveSpeed = PLAYER_MOVE_SPEED; // blocks per second
+  private isMoving = false; // Track movement state
+  private hasFallen = false; // Flag to prevent multiple fall triggers (NEW)
+  private _world: World; // Store world reference (NEW)
+  private isFalling = false; // Track if player is actively falling
+  private hasLanded = false; // NEW flag to track landing state
+
+  // Update constructor to accept World (NEW)
+  constructor(world: World) {
+    super(); // Call base constructor
+    this._world = world;
+  }
+
+  public tickWithPlayerInput(
+    entity: PlayerEntity,
+    input: PlayerInput,
+    cameraOrientation: PlayerCameraOrientation,
+    deltaTimeMs: number
+  ): void {
+    // Lock camera orientation to look straight down (90 degrees)
+    cameraOrientation.pitch = -Math.PI / 2; // 90 degrees down
+    cameraOrientation.yaw = 0;
+
+    // Set player rotation using constant ONLY if not landed
+    if (!this.hasLanded) {
+      try {
+        entity.setRotation(PLAYER_FACING_DOWN_ROTATION);
+      } catch (error) {
+        console.error(`[FallingPlayerController] Error setting rotation for entity ${entity.id}:`, error);
+      }
+    }
+
+    // Get current position
+    const currentPos = entity.position;
+
+    // --- Apply speed multiplier based on player state ---
+    // Get the player's current speed multiplier if available
+    if (entity.player) {
+      const playerState = playerGameStateMap.get(entity.player.username);
+      if (playerState && (playerState.difficulty === 'moderate' || playerState.difficulty === 'hard')) {
+        // Only apply increased gravity for moderate and hard difficulties
+        try {
+          const currentGravity = entity.rigidBodyOptions?.gravityScale || PLAYER_BASE_GRAVITY_SCALE;
+          const targetGravity = PLAYER_BASE_GRAVITY_SCALE * playerState.speedMultiplier;
+          
+          // Only update if there's a significant change to avoid constant updates
+          if (Math.abs(currentGravity - targetGravity) > 0.01) {
+            console.log(`[FallingPlayerController] Updating gravity scale for ${entity.player.username} to ${targetGravity}`);
+            entity.setGravityScale(targetGravity);
+          }
+        } catch (error) {
+          console.error(`[FallingPlayerController] Error updating gravity scale: ${error}`);
+        }
+      }
+    }
+    // --- End speed multiplier application ---
+
+    // --- Fall Detection Logic (NEW) ---
+    // ... existing code ...
+
+    // ... rest of existing method ...
+  }
+
+  // ... existing methods ...
+}
+
+// ... existing code ...
+
+  // Constructor of MathGameManager contains event handlers
+  constructor(private _world: World, backgroundMusic: Audio) {
+    this._answerBlocksManager = new AnswerBlocksManager(_world);
+    this._landingPlatformManager = new LandingPlatformManager(_world);
+    this._backgroundMusic = backgroundMusic;
+
+    // Handle player joining
+    _world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
+      // Create player entity
+      const playerEntity = new PlayerEntity({
+        player,
+        name: 'Player',
+        modelUri: PLAYER_MODEL_URI,
+        modelScale: PLAYER_MODEL_SCALE,
+        modelLoopedAnimations: [PLAYER_INITIAL_ANIMATION],
+        controller: new FallingPlayerController(this._world),
+        rigidBodyOptions: {
+          type: RigidBodyType.DYNAMIC,
+          gravityScale: PLAYER_BASE_GRAVITY_SCALE,
+          linearDamping: PLAYER_LINEAR_DAMPING,
+          colliders: [
+            {
+              shape: ColliderShape.CAPSULE,
+              halfHeight: PLAYER_COLLIDER_HALF_HEIGHT,
+              radius: PLAYER_COLLIDER_RADIUS,
+            }
+          ],
+        }
+      });
+
+      // ... existing player setup code ...
+
+      // Initialize player game state
+      playerGameStateMap.set(player.username, {
+        score: 0,
+        questionsPresented: 0,
+        gameActive: false,
+        currentAnswer: 0,
+        difficulty: 'moderate',
+        isFinalFall: false,
+        speedMultiplier: 1.0 // Initialize speed multiplier to 1.0 (default speed)
+      });
+      console.log(`[MathGameManager] Initialized game state for ${player.username}`);
+
+      // ... existing code ...
+    });
+
+    // ... existing code ...
+
+    // Handle correct answers
+    _world.on('correctAnswer', ({ player }) => {
+        const playerData = playerEntityMap.get(player.username);
+        const playerState = playerGameStateMap.get(player.username);
+
+        if (!playerData || !playerState || !playerState.gameActive) {
+            // console.log(`[MathGameManager] Correct answer event ignored for ${player.username} (inactive/missing state).`);
+            return;
+        }
+        const playerEntity = playerData.entity;
+        const controller = playerData.controller;
+
+        console.log(`[MathGameManager] Correct answer processed for ${player.username}.`);
+
+        // --- Logic before timeout ---
+        // Increment score and questions presented
+        playerState.score++;
+        playerState.questionsPresented++; // Increment happens here
+        
+        // --- NEW: Increase speed multiplier for moderate and hard difficulties ---
+        if (playerState.difficulty === 'moderate' || playerState.difficulty === 'hard') {
+            // Increase more aggressively for hard difficulty
+            const increment = playerState.difficulty === 'hard' ? 0.15 : 0.1;
+            playerState.speedMultiplier += increment;
+            
+            // Cap the multiplier at a maximum value
+            const maxMultiplier = playerState.difficulty === 'hard' ? 2.5 : 2.0;
+            if (playerState.speedMultiplier > maxMultiplier) {
+                playerState.speedMultiplier = maxMultiplier;
+            }
+            
+            console.log(`[MathGameManager] Speed multiplier increased to ${playerState.speedMultiplier} for ${player.username} (${playerState.difficulty} difficulty)`);
+        }
+        // --- END NEW speed multiplier logic ---
+        
+        playerGameStateMap.set(player.username, playerState); // Update state immediately
+
+        // ... rest of existing code ...
+    });
+
+    // Handle wrong answers
+    _world.on('wrongAnswer', ({ player }) => {
+        const playerData = playerEntityMap.get(player.username);
+        const playerState = playerGameStateMap.get(player.username);
+
+        // Ignore if player is in final fall or inactive
+        if (!playerData || !playerState || !playerState.gameActive || playerState.isFinalFall) {
+            // ... existing logs ...
+            return;
+        }
+        const playerEntity = playerData.entity;
+        const controller = playerData.controller;
+
+        console.log(`[MathGameManager] Wrong answer processed for ${player.username}. Questions presented: ${playerState.questionsPresented}/${MAX_QUESTIONS}`);
+
+        // --- Logic before timeout ---
+        // Increment questions presented, but not score
+        playerState.questionsPresented++; // Increment happens here
+        
+        // --- NEW: Reset speed multiplier for moderate and hard difficulties ---
+        if (playerState.difficulty === 'moderate' || playerState.difficulty === 'hard') {
+            playerState.speedMultiplier = 1.0; // Reset to default speed
+            console.log(`[MathGameManager] Speed multiplier reset to 1.0 for ${player.username} after wrong answer`);
+            
+            // Immediately update gravity scale back to default
+            try {
+                playerEntity.setGravityScale(PLAYER_BASE_GRAVITY_SCALE);
+            } catch (error) {
+                console.error(`[MathGameManager] Error resetting gravity scale: ${error}`);
+            }
+        }
+        // --- END NEW speed multiplier reset ---
+        
+        playerGameStateMap.set(player.username, playerState); // Update state immediately
+
+        // ... rest of existing code ...
+    });
+
+    // --- Other event handlers ---
+    // ... existing code ...
+
+    // ... rest of constructor ...
+  } // End Constructor
+
+      if (entity.player) {
+        const playerState = playerGameStateMap.get(entity.player.username);
+        if (playerState && (playerState.difficulty === 'moderate' || playerState.difficulty === 'hard')) {
+          // Only apply increased gravity for moderate and hard difficulties
+          try {
+            // There is no getGravityScale method, so we'll use a simpler approach
+            const targetGravity = PLAYER_BASE_GRAVITY_SCALE * playerState.speedMultiplier;
+            
+            // Apply the new gravity scale directly since we can't easily check the current value
+            console.log(`[FallingPlayerController] Updating gravity scale for ${entity.player.username} to ${targetGravity}`);
+            entity.setGravityScale(targetGravity);
+          } catch (error) {
+            console.error(`[FallingPlayerController] Error updating gravity scale: ${error}`);
+          }
+        }
+      }
+
+// --- NEW: Increase speed multiplier for moderate and hard difficulties ---
+if (playerState.difficulty === 'moderate' || playerState.difficulty === 'hard') {
+    // Use same increment for both moderate and hard difficulties
+    const increment = 0.15; // Same increment for both difficulties
+    playerState.speedMultiplier += increment;
+    
+    // Cap the multiplier at a maximum value - same for both difficulties
+    const maxMultiplier = 2.25; // Same max multiplier for both difficulties
+    if (playerState.speedMultiplier > maxMultiplier) {
+        playerState.speedMultiplier = maxMultiplier;
+    }
+    
+    console.log(`[MathGameManager] Speed multiplier increased to ${playerState.speedMultiplier} for ${player.username} (${playerState.difficulty} difficulty)`);
+}
+
+
+
+Mobile Version updates  (Mobile.ts)
+
+The difficulty selection system is now fully implemented in the mobile version of the game. Here's what I've added:
+1.	Difficulty Button References and State Variable
+•	Added references to all three difficulty buttons
+•	Created a selectedDifficulty variable to track the current selection (default: 'moderate')
+2.	Difficulty Selection Visual Feedback
+•	Added a highlightDifficulty() function that:
+•	Removes the 'active' class from all buttons
+•	Adds the 'active' class to the selected button
+•	Updates the selectedDifficulty variable
+3.	Event Listeners for Difficulty Buttons
+•	Added click event listeners for each difficulty button
+•	Each listener calls highlightDifficulty() with the appropriate difficulty level
+4.	Updated Start Button Handler
+•	Modified the start button click handler to:
+•	Send the selected difficulty to the server in the start-game message
+•	Log the selected difficulty for debugging
+5.	Added Restart Game Functionality
+•	Updated the Play Again button to send a restart-game message to the server
+These changes ensure that:
+1.	The user can visually see which difficulty is selected
+2.	The selected difficulty is properly sent to the server
+3.	The server can adjust the game difficulty based on the player's selection
+4.	The restart functionality correctly signals the game to reset
+The implementation matches the server-side handling in mobile.ts, which already had logic to process the difficulty parameter.

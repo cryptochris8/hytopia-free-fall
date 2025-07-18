@@ -1,0 +1,20 @@
+{
+  "name": "free-fall",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run index.ts",
+    "mobile": "bun run mobile.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@hytopia.com/assets": "^0.3.14",
+    "hytopia": "^0.7.3"
+  }
+}

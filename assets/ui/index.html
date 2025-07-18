@@ -1,0 +1,923 @@
+<!--
+This is a basic boilerplate example of how to implement simple game UI,
+and also configure additional buttons for mobile compatibility.
+-->
+
+<!--
+  HYTOPIA allows you to build completely custom UI using HTML, CSS and Javascript.
+  You can build simple UIs, to highly complex ones. UI capabilities are as powerful
+  as building a regular web page - there are close to no limitations on what is possible.
+
+  Remember, HYTOPIA sandboxes your UI & UI scripts, so external network requests or
+  other unsafe actions likely won't work as you expect in production.
+-->
+
+<!-- Start Screen -->
+<div id="start-screen" class="screen active">
+  <img id="start-image" src="{{CDN_ASSETS_URL}}/ui/logos/freefallart.png" alt="Free Fall Math">
+  <div class="instructions">
+    A math problem will appear at the top of the screen.<br>
+    Move your character to the block showing the correct answer!<br>
+    Answer 10 questions to complete the game.<br><br>
+    Choose your difficulty:
+  </div>
+  <!-- Difficulty Buttons -->
+  <div class="difficulty-buttons">
+      <div id="beginner-button" class="button">Beginner</div>
+      <div id="moderate-button" class="button">Moderate</div>
+      <div id="hard-button" class="button">Hard</div>
+  </div>
+  <!-- <div id="start-button" class="button">Start Game</div> --> <!-- Original button commented out -->
+</div>
+
+<!-- Game HUD -->
+<div id="game-hud" class="screen">
+  <div class="math-problem-ui">
+    <div id="problem-container">
+      <span id="problem-num1">?</span>
+      <span id="problem-op">+</span>
+      <span id="problem-num2">?</span>
+    </div>
+  </div>
+  
+  <!-- Power-up Indicators -->
+  <div id="powerup-indicators" class="powerup-indicators">
+    <!-- Power-ups will be dynamically added here -->
+  </div>
+</div>
+
+<!-- End Screen -->
+<div id="end-screen" class="screen">
+  <h1>Game Over!</h1>
+  <div class="final-score-container">
+    Final Score: <span id="final-score">0</span>
+  </div>
+  <div id="play-again-button" class="button">Play Again</div>
+</div>
+
+<!-- Mobile Controls - Updated with directional pad -->
+<div class="mobile-controls">
+  <!-- Directional pad for movement -->
+  <div class="mobile-direction-pad">
+    <!-- Top row -->
+    <div class="dir-cell"></div>
+    <div id="mobile-up" class="mobile-dir-button">↑</div>
+    <div class="dir-cell"></div>
+    <!-- Middle row with left/right -->
+    <div id="mobile-left" class="mobile-dir-button">←</div>
+    <div class="dir-cell"></div>
+    <div id="mobile-right" class="mobile-dir-button">→</div>
+    <!-- Bottom row -->
+    <div class="dir-cell"></div>
+    <div id="mobile-down" class="mobile-dir-button">↓</div>
+    <div class="dir-cell"></div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="mobile-action-buttons">
+    <a id="mobile-interact-button" class="mobile-button">
+      <img src="{{CDN_ASSETS_URL}}/icons/target.png" />
+    </a>
+
+    <a id="mobile-jump-button" class="mobile-button">
+      <img src="{{CDN_ASSETS_URL}}/icons/jump.png" />
+    </a>
+  </div>
+  
+  <!-- Look Down Button (Centered) -->
+  <div class="mobile-look-down-container">
+    <a id="mobile-look-down" class="mobile-look-down-button">
+      <div class="look-down-icon">👇</div>
+      <div class="look-down-text">LOOK DOWN</div>
+    </a>
+  </div>
+</div>
+
+<style>
+  /* By default, we hide the mobile controls */
+  .mobile-controls {
+    display: none;
+  }
+
+  /*
+    We can use the body.mobile class to detect if we're on a mobile device.
+    The HYTOPIA game client will always add this class to the body element when running on a mobile device.
+  */
+  body.mobile .mobile-controls { /* If this css selector matches because we're on mobile, show the mobile controls */
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    pointer-events: none; /* Allow clicks to pass through container */
+  }
+
+  /* Mobile action buttons container (right side) */
+  .mobile-action-buttons {
+    display: flex;
+    gap: 14px;
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    pointer-events: auto; /* Enable interaction with buttons */
+  }
+
+  /* Mobile Look Down Button (center bottom) */
+  .mobile-look-down-container {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: auto; /* Enable interaction */
+    z-index: 100; /* Ensure it's above other elements */
+  }
+
+  .mobile-look-down-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .look-down-icon {
+    font-size: 32px;
+    margin-bottom: 2px;
+  }
+
+  .look-down-text {
+    font-size: 10px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  .mobile-look-down-button.active {
+    transform: scale(0.95);
+    background-color: rgba(0, 100, 255, 0.8);
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.5);
+  }
+
+  /* Mobile direction pad (left side) */
+  .mobile-direction-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    width: 150px;
+    height: 150px;
+    pointer-events: auto; /* Enable interaction with dpad */
+  }
+
+  /* Directional button cells */
+  .dir-cell {
+    width: 46px;
+    height: 46px;
+  }
+
+  /* Direction buttons */
+  .mobile-dir-button {
+    width: 46px;
+    height: 46px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, background-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+    user-select: none;
+  }
+
+  /* You can configure and style your buttons however you'd like. This is a minimalistic starting point. */
+  .mobile-button {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    width: 50px;
+    height: 50px;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, background-color;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+    user-select: none;
+  }
+  
+  .mobile-button img {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mobile-button.active,
+  .mobile-dir-button.active {
+    transform: scale(0.92);
+    background-color: rgba(0, 0, 0, 0.75);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }  
+
+  /* Ensure no default body margin */
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    user-select: none;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.3); /* Optional: slightly dim background */
+  }
+
+  .screen {
+      display: none; /* Hide screens by default */
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+  }
+
+  .screen.active {
+      display: block; /* Show active screen */
+  }
+
+  /* Start Screen Styles */
+  #start-screen.active { /* Apply flex only when active */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+  }
+
+  #start-image {
+      max-width: 80%;
+      max-height: 50%; /* Adjusted max height */
+      margin-bottom: 20px; /* Adjusted margin */
+      object-fit: contain;
+  }
+
+  .instructions {
+      margin-bottom: 30px; /* Add margin below instructions */
+      font-size: 16px; /* Slightly smaller font */
+      line-height: 1.5;
+  }
+
+  /* Style for the difficulty button container */
+  .difficulty-buttons {
+      display: flex; /* Arrange buttons horizontally */
+      gap: 15px; /* Add space between buttons */
+      margin-top: 10px; /* Add some space above the buttons */
+  }
+
+  .button {
+      background-color: #4CAF50; /* Green background */
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      min-width: 120px; /* Ensure buttons have a minimum width */
+  }
+
+  .button:hover {
+      background-color: #45a049; /* Darker green on hover - Keep general hover */
+  }
+
+  /* Specific styles for difficulty buttons */
+  #beginner-button {
+      background-color: #007bff; /* Bright Blue */
+  }
+  #beginner-button:hover {
+      background-color: #0056b3; /* Darker Blue */
+  }
+
+  #moderate-button {
+      background-color: #ffc107; /* Bright Yellow */
+      color: #333; /* Darker text for yellow */
+  }
+  #moderate-button:hover {
+      background-color: #e0a800; /* Darker Yellow */
+  }
+
+  #hard-button {
+      background-color: #dc3545; /* Bright Red */
+  }
+   #hard-button:hover {
+      background-color: #c82333; /* Darker Red */
+  }
+
+  /* Game HUD Styles (Problem container) */
+  .math-problem-ui {
+    position: absolute; /* Position relative to game-hud screen */
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 15px 30px;
+    border-radius: 10px;
+    z-index: 10;
+    margin-top: 20px;
+  }
+
+  #problem-container {
+    font-size: 48px;
+    font-weight: bold;
+  }
+
+  #problem-container span {
+    margin: 0 10px;
+  }
+
+  /* Power-up Indicators Styles */
+  .powerup-indicators {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 15;
+  }
+
+  .powerup-indicator {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 2px solid;
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-width: 120px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: powerup-appear 0.3s ease-out;
+  }
+
+  .powerup-indicator.expired {
+    animation: powerup-disappear 0.3s ease-in;
+  }
+
+  .powerup-icon {
+    font-size: 16px;
+    margin-right: 8px;
+  }
+
+  .powerup-name {
+    flex: 1;
+    text-align: left;
+  }
+
+  .powerup-timer {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  .powerup-uses {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  /* Power-up specific colors */
+  .powerup-slowmotion { border-color: #00bfff; color: #00bfff; }
+  .powerup-shield { border-color: #32cd32; color: #32cd32; }
+  .powerup-magnet { border-color: #c864ff; color: #c864ff; }
+  .powerup-doublepoints { border-color: #ffd700; color: #ffd700; }
+  .powerup-rewind { border-color: #50ff50; color: #50ff50; }
+
+  @keyframes powerup-appear {
+    from {
+      opacity: 0;
+      transform: translateX(100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes powerup-disappear {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(100px);
+    }
+  }
+
+  /* End Screen Styles */
+  #end-screen.active { /* Apply styles only when active */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.8); /* Slightly darker overlay */
+  }
+
+  #end-screen h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+  }
+
+  .final-score-container {
+    font-size: 24px;
+    margin-bottom: 40px;
+  }
+
+  #final-score {
+    font-weight: bold;
+    color: #4CAF50; /* Green color for score */
+  }
+
+  /* Reuse button style for play again */
+  #play-again-button {
+    margin-top: 20px;
+  }
+
+  /* Media Query for Mobile Layout Adjustments */
+  @media (max-width: 768px) {
+    /* Stack difficulty buttons vertically on smaller screens */
+    .difficulty-buttons {
+        flex-direction: column;
+        align-items: center; /* Center buttons when stacked */
+        gap: 10px; /* Adjust gap for vertical layout */
+    }
+
+    /* Optional: Ensure buttons have enough width when stacked */
+    .difficulty-buttons .button {
+        min-width: 150px; /* Adjust as needed */
+    }
+    
+    /* Reduce font size for math problem on mobile */
+    #problem-container {
+      font-size: 36px;
+    }
+    
+    /* Adjust end screen text sizes */
+    #end-screen h1 {
+      font-size: 36px;
+    }
+    
+    .final-score-container {
+      font-size: 20px;
+    }
+  }
+</style>
+
+<script>
+  // console.log('[UI DEBUG] Script block parsing started.'); // Keep this top-level log
+
+  // ** TODO: Replace DOMContentLoaded with the correct Hytopia UI initialization event **
+  // document.addEventListener('DOMContentLoaded', () => { 
+  //   initUI(); 
+  // });
+  
+  // Wrap UI initialization logic in a function
+  function initUI() {
+    // console.log('[UI DEBUG] Initializing UI...');
+
+    // Get references to screens and buttons
+    const startScreen = document.getElementById('start-screen');
+    const gameHud = document.getElementById('game-hud');
+    const endScreen = document.getElementById('end-screen');
+    // const startButton = document.getElementById('start-button'); // No longer used
+    const beginnerButton = document.getElementById('beginner-button'); // New
+    const moderateButton = document.getElementById('moderate-button'); // New
+    const hardButton = document.getElementById('hard-button'); // New
+    const playAgainButton = document.getElementById('play-again-button');
+    // console.log('[UI DEBUG] Got screen/button elements.'); 
+
+    // Get references to problem display elements
+    const problemNum1 = document.getElementById('problem-num1');
+    const problemOp = document.getElementById('problem-op');
+    const problemNum2 = document.getElementById('problem-num2');
+
+    // Get reference to final score display
+    const finalScoreDisplay = document.getElementById('final-score');
+
+    // Get references to mobile control buttons
+    const mobileInteractButton = document.getElementById('mobile-interact-button');
+    const mobileJumpButton = document.getElementById('mobile-jump-button');
+    const mobileUpButton = document.getElementById('mobile-up');
+    const mobileLeftButton = document.getElementById('mobile-left');
+    const mobileRightButton = document.getElementById('mobile-right');
+    const mobileDownButton = document.getElementById('mobile-down');
+
+    // --- Safety Checks ---
+    if (!startScreen || !gameHud || !endScreen || !beginnerButton || !moderateButton || !hardButton || !playAgainButton || !problemNum1 || !problemOp || !problemNum2 || !finalScoreDisplay) {
+      console.error('[UI Error] One or more essential elements not found!');
+      // Add checks for new buttons
+      if (!beginnerButton) console.error('[UI Error] beginnerButton element is missing!');
+      if (!moderateButton) console.error('[UI Error] moderateButton element is missing!');
+      if (!hardButton) console.error('[UI Error] hardButton element is missing!');
+      return; 
+    }
+    
+    // Check mobile controls
+    if (!mobileInteractButton || !mobileJumpButton || !mobileUpButton || !mobileLeftButton || !mobileRightButton || !mobileDownButton) {
+      console.error('[UI Error] One or more mobile control elements not found!');
+      return;
+    }
+    // console.log('[UI DEBUG] All essential elements found.'); 
+    // console.log('[UI DEBUG] startButton element:', startButton); // No longer relevant
+
+    // Function to switch active screen
+    function showScreen(screenElement) {
+      // console.log('[UI DEBUG] Attempting to show screen:', screenElement.id);
+      // Hide all screens first
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      // Show the target screen
+      if (screenElement) { 
+          screenElement.classList.add('active');
+          // console.log('[UI DEBUG] Activated screen:', screenElement.id);
+      } else {
+          console.error('[UI Error] showScreen called with null or undefined element'); // Keep basic error
+      }
+    }
+
+    // --- Event Listeners ---
+    
+    // Function to handle starting the game with a specific difficulty
+    function startGame(difficulty) {
+      console.log(`[UI] Starting game with difficulty: ${difficulty}`);
+      hytopia.sendData({ type: 'start-game', difficulty: difficulty });
+      showScreen(gameHud);
+      // Play start game sound
+      try {
+        const startSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/start-game.mp3';
+        const startSound = new Audio(startSoundPath);
+        startSound.play().catch(error => {
+          console.warn('Could not autoplay start game sound:', error);
+        });
+      } catch (error) {
+        console.error('Error creating or playing start game sound:', error);
+      }
+    }
+
+    // Add listeners to new difficulty buttons
+    beginnerButton.addEventListener('click', () => startGame('beginner'));
+    moderateButton.addEventListener('click', () => startGame('moderate'));
+    hardButton.addEventListener('click', () => startGame('hard'));
+
+    // Event listener for the Play Again button
+    playAgainButton.addEventListener('click', () => {
+      // console.log('[UI DEBUG] Play Again button clicked!'); // Added log
+      // console.log('[UI DEBUG] Sending restart-game data to server...'); // Added log
+      hytopia.sendData({ type: 'restart-game' });
+      showScreen(startScreen);
+
+      // Play Game Over Sound (Consider if this sound should play on restart or only on game-over)
+      try {
+        const gameOverSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/game-over-voice.mp3';
+        // console.log('[UI DEBUG] Attempting to play game over sound on restart:', gameOverSoundPath); // Modified log
+        const gameOverSound = new Audio(gameOverSoundPath);
+        gameOverSound.play().catch(error => {
+          console.warn('Could not autoplay game over sound:', error); // Keep basic warning
+        });
+      } catch (error) {
+        console.error('Error creating or playing game over sound:', error); // Keep basic error
+      }
+    });
+
+    // --- Hytopia Data Listener ---
+    hytopia.onData(data => {
+      // console.log('[UI DEBUG] Received data from server:', data);
+
+      if (data.type === 'problem') {
+        problemNum1.textContent = data.num1;
+        // Change displayed operator based on received symbol
+        let displayOp = data.operation;
+        if (data.operation === '*') {
+          displayOp = 'x';
+        } else if (data.operation === '/') {
+          displayOp = '÷';
+        }
+        problemOp.textContent = displayOp; // Use the potentially modified symbol
+        problemNum2.textContent = data.num2;
+      }
+
+      if (data.type === 'game-over') {
+        finalScoreDisplay.textContent = `${data.score} / ${data.maxQuestions}`;
+        showScreen(endScreen);
+
+        // Play Game Over Sound
+        try {
+          const gameOverSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/game-over-voice.mp3';
+          // console.log('[UI DEBUG] Attempting to play game over sound (on game-over event):');
+          const gameOverSound = new Audio(gameOverSoundPath);
+          gameOverSound.play().catch(error => {
+            console.warn('Could not autoplay game over sound:', error); // Keep basic warning
+          });
+        } catch (error) {
+          console.error('Error creating or playing game over sound:', error); // Keep basic error
+        }
+      }
+
+      // Handle power-up events
+      if (data.type === 'power-up-collected') {
+        addPowerUpIndicator(data.powerUp);
+      }
+
+      if (data.type === 'power-up-activated') {
+        updatePowerUpIndicator(data.powerUp);
+      }
+
+      if (data.type === 'power-up-deactivated') {
+        removePowerUpIndicator(data.powerUp);
+      }
+
+      if (data.type === 'rewind-used') {
+        updateRewindUses(data.remainingUses);
+        // Update score display if needed
+        if (finalScoreDisplay && data.newScore !== undefined) {
+          // Find score display in game HUD and update if it exists
+          // (This may need adjustment based on actual score display location)
+        }
+      }
+    });
+
+    // --- Power-up UI Functions ---
+    const powerUpIndicators = document.getElementById('powerup-indicators');
+    const activePowerUps = new Map(); // Track active power-ups
+
+    function addPowerUpIndicator(powerUp) {
+      if (!powerUpIndicators) return;
+
+      const indicator = document.createElement('div');
+      indicator.className = `powerup-indicator powerup-${powerUp.name.toLowerCase().replace(/\s+/g, '')}`;
+      indicator.id = `powerup-${powerUp.name.toLowerCase().replace(/\s+/g, '')}`;
+
+      // Icon mapping
+      const iconMap = {
+        'slowmotion': '⏳',
+        'shield': '🛡️',
+        'magnet': '🧲',
+        'doublepoints': '💰',
+        'rewind': '⏪'
+      };
+
+      const iconKey = powerUp.icon || powerUp.name.toLowerCase().replace(/\s+/g, '');
+      const icon = iconMap[iconKey] || '⚡';
+
+      indicator.innerHTML = `
+        <span class="powerup-icon">${icon}</span>
+        <span class="powerup-name">${powerUp.name}</span>
+        ${powerUp.uses ? `<span class="powerup-uses">${powerUp.uses}</span>` : 
+          powerUp.duration > 0 ? `<span class="powerup-timer" id="timer-${indicator.id}">--</span>` : ''}
+      `;
+
+      powerUpIndicators.appendChild(indicator);
+      activePowerUps.set(powerUp.name, { element: indicator, ...powerUp });
+
+      // Start timer for timed power-ups
+      if (powerUp.duration > 0) {
+        startPowerUpTimer(powerUp.name, powerUp.duration);
+      }
+
+      console.log(`[UI] Added power-up indicator: ${powerUp.name}`);
+    }
+
+    function updatePowerUpIndicator(powerUp) {
+      const active = activePowerUps.get(powerUp.name);
+      if (active && active.element) {
+        // Update timer if it's a timed power-up
+        if (powerUp.duration > 0) {
+          startPowerUpTimer(powerUp.name, powerUp.duration);
+        }
+      } else {
+        // If not already shown, add it
+        addPowerUpIndicator(powerUp);
+      }
+    }
+
+    function removePowerUpIndicator(powerUpName) {
+      const active = activePowerUps.get(powerUpName);
+      if (active && active.element) {
+        active.element.classList.add('expired');
+        setTimeout(() => {
+          if (active.element.parentNode) {
+            active.element.parentNode.removeChild(active.element);
+          }
+          activePowerUps.delete(powerUpName);
+        }, 300); // Match animation duration
+        console.log(`[UI] Removed power-up indicator: ${powerUpName}`);
+      }
+    }
+
+    function updateRewindUses(remainingUses) {
+      const rewindIndicator = activePowerUps.get('Rewind');
+      if (rewindIndicator && rewindIndicator.element) {
+        const usesElement = rewindIndicator.element.querySelector('.powerup-uses');
+        if (usesElement) {
+          usesElement.textContent = remainingUses;
+          if (remainingUses === 0) {
+            // Remove the indicator when no uses left
+            removePowerUpIndicator('Rewind');
+          }
+        }
+      }
+    }
+
+    function startPowerUpTimer(powerUpName, duration) {
+      const active = activePowerUps.get(powerUpName);
+      if (!active || !active.element) return;
+
+      const timerElement = active.element.querySelector('.powerup-timer');
+      if (!timerElement) return;
+
+      const startTime = Date.now();
+      const endTime = startTime + duration;
+
+      // Clear any existing timer
+      if (active.timerId) {
+        clearInterval(active.timerId);
+      }
+
+      active.timerId = setInterval(() => {
+        const now = Date.now();
+        const remaining = Math.max(0, endTime - now);
+        const seconds = Math.ceil(remaining / 1000);
+
+        if (seconds > 0) {
+          timerElement.textContent = `${seconds}s`;
+        } else {
+          timerElement.textContent = '0s';
+          clearInterval(active.timerId);
+          // The power-up will be removed by the server deactivation event
+        }
+      }, 100);
+
+      activePowerUps.set(powerUpName, active);
+    }
+
+    // --- Mobile Controls ---
+    // Helper function to handle touch events for mobile controls
+    function setupMobileTouchControl(element, keyCode, display) {
+      if (!element) {
+        console.error(`[UI Error] Mobile control element for ${keyCode} not found`);
+        return;
+      }
+      
+      element.addEventListener('touchstart', e => {
+        e.preventDefault();
+        element.classList.add('active');
+        hytopia.pressInput(keyCode, true);
+        if (display) console.log(`[UI] Mobile ${display} pressed`);
+      });
+      
+      element.addEventListener('touchend', e => {
+        e.preventDefault();
+        element.classList.remove('active');
+        hytopia.pressInput(keyCode, false);
+        if (display) console.log(`[UI] Mobile ${display} released`);
+      });
+      
+      // Handle touch cancel (e.g. if notification appears)
+      element.addEventListener('touchcancel', e => {
+        e.preventDefault();
+        element.classList.remove('active');
+        hytopia.pressInput(keyCode, false);
+      });
+    }
+    
+    // Set up directional controls
+    setupMobileTouchControl(mobileUpButton, 'w', 'up');
+    setupMobileTouchControl(mobileLeftButton, 'a', 'left');
+    setupMobileTouchControl(mobileDownButton, 's', 'down');
+    setupMobileTouchControl(mobileRightButton, 'd', 'right');
+    
+    // Set up action buttons
+    setupMobileTouchControl(mobileInteractButton, 'ml', 'interact');
+    setupMobileTouchControl(mobileJumpButton, ' ', 'jump');
+
+    // Set up look down button - Force camera to look down
+    const mobileLookDownButton = document.getElementById('mobile-look-down');
+    if (mobileLookDownButton) {
+      // Handle the look down button - Focus the view downward when pressed
+      mobileLookDownButton.addEventListener('touchstart', e => {
+        e.preventDefault();
+        mobileLookDownButton.classList.add('active');
+        
+        // Send multiple inputs to force looking down
+        // The page down key (to look down in many games)
+        hytopia.pressInput('Page_Down', true);
+        
+        // Also send 'l' key as an additional way to trigger camera adjustment
+        hytopia.pressInput('l', true);
+        
+        console.log('[UI] Mobile look down activated');
+        
+        // Create a visual feedback element to show the player is looking down
+        const feedback = document.createElement('div');
+        feedback.className = 'look-down-feedback';
+        feedback.style.position = 'fixed';
+        feedback.style.top = '50%';
+        feedback.style.left = '50%';
+        feedback.style.transform = 'translate(-50%, -50%)';
+        feedback.style.padding = '10px 20px';
+        feedback.style.background = 'rgba(0, 0, 0, 0.7)';
+        feedback.style.color = 'white';
+        feedback.style.borderRadius = '5px';
+        feedback.style.zIndex = '1000';
+        feedback.textContent = 'Looking Down';
+        document.body.appendChild(feedback);
+        
+        // Remove the feedback after a short delay
+        setTimeout(() => {
+          if (feedback.parentNode) {
+            feedback.parentNode.removeChild(feedback);
+          }
+        }, 2000);
+      });
+      
+      mobileLookDownButton.addEventListener('touchend', e => {
+        e.preventDefault();
+        mobileLookDownButton.classList.remove('active');
+        hytopia.pressInput('Page_Down', false);
+        hytopia.pressInput('l', false);
+        console.log('[UI] Mobile look down released');
+      });
+      
+      mobileLookDownButton.addEventListener('touchcancel', e => {
+        e.preventDefault();
+        mobileLookDownButton.classList.remove('active');
+        hytopia.pressInput('Page_Down', false);
+        hytopia.pressInput('l', false);
+      });
+    } else {
+      console.error('[UI Error] Mobile look down button not found');
+    }
+
+    // Show the start screen initially
+    showScreen(startScreen);
+    // console.log('[UI DEBUG] UI Initialized (called from initUI). Showing Start Screen.');
+
+    // Play welcome sound on load
+    try {
+      const welcomeSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/opening-voice.mp3';
+      // console.log('[UI DEBUG] Attempting to play welcome sound:', welcomeSoundPath);
+      const welcomeSound = new Audio(welcomeSoundPath);
+      welcomeSound.play().catch(error => {
+        // Keep the more detailed warning for autoplay issues
+        console.warn(`Could not autoplay welcome sound. Browser policy likely requires user interaction first. Error:`, error);
+      });
+    } catch (error) {
+      console.error('Error creating or playing welcome sound:', error); // Keep basic error
+    }
+  } // End of initUI function
+
+  // ** TODO: Replace DOMContentLoaded with the correct Hytopia UI initialization event **
+  // Example (placeholder): 
+  // hytopia.onUIReady(() => { 
+  //   initUI(); 
+  // });
+  
+  // Fallback: If no specific Hytopia event is found, try calling initUI directly after a small delay
+  // This is less reliable than an event but might work if DOMContentLoaded is simply delayed
+  setTimeout(() => {
+    // console.log('[UI DEBUG] Calling initUI after timeout (fallback)');
+    initUI();
+  }, 500); // Adjust delay as needed
+
+</script>

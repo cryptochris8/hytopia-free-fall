@@ -1,0 +1,47 @@
+<!-- Device Detector UI -->
+<script>
+  // Detect if the device is mobile based on several factors
+  function detectMobileDevice() {
+    // Check for touch support as primary indicator
+    const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    // Check screen dimensions (most mobile devices are under 1000px width)
+    const hasSmallScreen = window.innerWidth < 1000;
+    
+    // Check for mobile-specific browser features
+    const hasOrientation = typeof window.orientation !== 'undefined';
+    
+    // Check user agent as fallback (less reliable)
+    const userAgent = navigator.userAgent || '';
+    const mobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    
+    // Consider it mobile if it has touch support AND either has small screen, orientation, or mobile user agent
+    const isMobile = hasTouchSupport && (hasSmallScreen || hasOrientation || mobileUserAgent);
+    
+    // Send the result back to the server
+    hytopia.sendData({
+      type: 'device-detection',
+      isMobile: isMobile,
+      // Send additional info for debugging
+      debug: {
+        hasTouchSupport,
+        hasSmallScreen,
+        screenWidth: window.innerWidth,
+        screenHeight: window.innerHeight,
+        hasOrientation,
+        userAgent
+      }
+    });
+    
+    console.log(`Device detection result: ${isMobile ? 'Mobile' : 'Desktop'}`);
+  }
+  
+  // Run the detection as soon as the page loads
+  window.addEventListener('DOMContentLoaded', detectMobileDevice);
+  
+  // Also run on resize in case of orientation changes
+  window.addEventListener('resize', detectMobileDevice);
+</script>
+
+<!-- Empty UI - this is just for detection -->
+<div style="display: none;">Device detection in progress...</div> 

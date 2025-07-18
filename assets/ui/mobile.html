@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<div id="mobile-app" class="mobile-app">
+  <!-- Start Screen -->
+  <div id="start-screen" class="screen active">
+    <img id="start-image" src="{{CDN_ASSETS_URL}}/ui/logos/freefallart.png" alt="Free Fall Art">
+    <div class="instructions">
+      A math problem will appear at the top of the screen.<br>
+      Touch the block showing the correct answer!<br>
+      Answer 10 questions to complete the game.
+    </div>
+    <div id="start-button" class="button">Start Game</div>
+  </div>
+
+  <!-- Game HUD -->
+  <div id="game-hud" class="screen">
+    <div class="math-problem-ui">
+      <div id="problem-container">
+        <span id="problem-num1">?</span>
+        <span id="problem-op">+</span>
+        <span id="problem-num2">?</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Screen -->
+  <div id="end-screen" class="screen">
+    <h1>Game Over!</h1>
+    <div class="final-score-container">
+      Final Score: <span id="final-score">0</span>
+    </div>
+    <div id="play-again-button" class="button">Play Again</div>
+  </div>
+
+  <!-- Mobile Controls -->
+  <div class="mobile-controls">
+    <!-- Movement Controls (D-Pad Style) -->
+    <div class="d-pad-container">
+      <div class="d-pad">
+        <div id="dpad-up" class="dpad-button dpad-up">
+          <img src="{{CDN_ASSETS_URL}}/icons/arrow-up.png" alt="Up" onerror="this.style.display='none';this.parentNode.textContent='↑'">
+        </div>
+        <div id="dpad-left" class="dpad-button dpad-left">
+          <img src="{{CDN_ASSETS_URL}}/icons/arrow-left.png" alt="Left" onerror="this.style.display='none';this.parentNode.textContent='←'">
+        </div>
+        <div id="dpad-right" class="dpad-button dpad-right">
+          <img src="{{CDN_ASSETS_URL}}/icons/arrow-right.png" alt="Right" onerror="this.style.display='none';this.parentNode.textContent='→'">
+        </div>
+        <div id="dpad-down" class="dpad-button dpad-down">
+          <img src="{{CDN_ASSETS_URL}}/icons/arrow-down.png" alt="Down" onerror="this.style.display='none';this.parentNode.textContent='↓'">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Global Reset */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+    user-select: none;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.3);
+    touch-action: manipulation; /* Disable double-tap zoom */
+  }
+
+  /* Mobile App Container */
+  .mobile-app {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+
+  /* Screen Styles */
+  .screen {
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+
+  .screen.active {
+    display: block;
+  }
+
+  /* Start Screen Styles */
+  #start-screen.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #start-image {
+    max-width: 90%;
+    max-height: 50%;
+    margin-bottom: 20px;
+    object-fit: contain;
+  }
+
+  .instructions {
+    font-size: 16px;
+    margin-bottom: 30px;
+    padding: 0 20px;
+    max-width: 90%;
+    line-height: 1.5;
+  }
+
+  .button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 20px;
+  }
+
+  .button:active {
+    background-color: #45a049;
+    transform: scale(0.98);
+  }
+
+  /* Game HUD Styles */
+  .math-problem-ui {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 15px 25px;
+    border-radius: 10px;
+    z-index: 10;
+  }
+
+  #problem-container {
+    font-size: 36px;
+    font-weight: bold;
+  }
+
+  #problem-container span {
+    margin: 0 8px;
+  }
+
+  /* End Screen Styles */
+  #end-screen.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+
+  #end-screen h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+  }
+
+  .final-score-container {
+    font-size: 22px;
+    margin-bottom: 40px;
+  }
+
+  #final-score {
+    font-weight: bold;
+    color: #4CAF50;
+  }
+
+  /* Mobile Controls */
+  .mobile-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+    pointer-events: none; /* Make container transparent to clicks */
+  }
+
+  /* D-Pad Controls */
+  .d-pad-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    pointer-events: auto; /* Enable clicks on this container */
+  }
+
+  .d-pad {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .dpad-button {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+
+  .dpad-button img {
+    width: 24px;
+    height: 24px;
+    opacity: 0.8;
+  }
+
+  .dpad-button.active {
+    transform: scale(0.9);
+    background-color: rgba(76, 175, 80, 0.7);
+  }
+
+  .dpad-up {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .dpad-left {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .dpad-right {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .dpad-down {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Media Queries for different device sizes */
+  @media (max-width: 360px) {
+    #problem-container {
+      font-size: 30px;
+    }
+    
+    .d-pad-container {
+      width: 130px;
+      height: 130px;
+    }
+
+    .dpad-button {
+      width: 45px;
+      height: 45px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    /* For tablets */
+    #problem-container {
+      font-size: 42px;
+    }
+
+    .instructions {
+      font-size: 18px;
+    }
+
+    .d-pad-container {
+      width: 180px;
+      height: 180px;
+    }
+
+    .dpad-button {
+      width: 60px;
+      height: 60px;
+    }
+  }
+</style>
+
+<script>
+  // Screen elements
+  const startScreen = document.getElementById('start-screen');
+  const gameHud = document.getElementById('game-hud');
+  const endScreen = document.getElementById('end-screen');
+
+  // Problem display elements
+  const num1Element = document.getElementById('problem-num1');
+  const opElement = document.getElementById('problem-op');
+  const num2Element = document.getElementById('problem-num2');
+
+  // Start and Play Again buttons
+  const startButton = document.getElementById('start-button');
+  const playAgainButton = document.getElementById('play-again-button');
+  const finalScoreElement = document.getElementById('final-score');
+
+  // D-Pad buttons
+  const dpadUp = document.getElementById('dpad-up');
+  const dpadLeft = document.getElementById('dpad-left');
+  const dpadRight = document.getElementById('dpad-right');
+  const dpadDown = document.getElementById('dpad-down');
+
+  // Function to switch active screen
+  function showScreen(screenToShow) {
+    if (startScreen) startScreen.classList.remove('active');
+    if (gameHud) gameHud.classList.remove('active');
+    if (endScreen) endScreen.classList.remove('active');
+    
+    if (screenToShow) {
+      screenToShow.classList.add('active');
+    }
+  }
+
+  // Function to update the displayed problem
+  function updateProblemDisplay(num1, operation, num2) {
+    // Map operation symbols for display
+    let displayOperation = operation;
+    if (operation === '*') {
+      displayOperation = '×'; // Multiplication sign
+    } else if (operation === '/') {
+      displayOperation = '÷'; // Division sign
+    }
+
+    if (num1Element) num1Element.textContent = num1;
+    if (opElement) opElement.textContent = displayOperation;
+    if (num2Element) num2Element.textContent = num2;
+  }
+
+  // Handle touch events for D-Pad
+  function setupDpadControls() {
+    // Helper function to handle touch events
+    function setupDpadButton(element, key) {
+      if (!element) return;
+      
+      // Touch start - press the key
+      element.addEventListener('touchstart', function(e) {
+        e.preventDefault(); // Prevent default behavior
+        element.classList.add('active');
+        hytopia.pressInput(key, true);
+      }, { passive: false });
+      
+      // Touch end - release the key
+      element.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        element.classList.remove('active');
+        hytopia.pressInput(key, false);
+      }, { passive: false });
+      
+      // Touch cancel - also release the key
+      element.addEventListener('touchcancel', function(e) {
+        e.preventDefault();
+        element.classList.remove('active');
+        hytopia.pressInput(key, false);
+      }, { passive: false });
+    }
+    
+    // Setup all d-pad buttons
+    setupDpadButton(dpadUp, 'w');
+    setupDpadButton(dpadLeft, 'a');
+    setupDpadButton(dpadRight, 'd');
+    setupDpadButton(dpadDown, 's');
+  }
+
+  // Listen for data sent from the server
+  hytopia.onData(data => {
+    if (data && data.type === 'problem') {
+      if (typeof data.num1 !== 'undefined' && 
+          typeof data.operation !== 'undefined' && 
+          typeof data.num2 !== 'undefined') {
+        updateProblemDisplay(data.num1, data.operation, data.num2);
+      } else {
+        console.error('Received incomplete problem data:', data);
+      }
+    } 
+    // Handle game over message
+    else if (data && data.type === 'game-over') {
+      console.log('Received game-over message with score:', data.score);
+      if (finalScoreElement && typeof data.score !== 'undefined') {
+        const scoreText = `${data.score}/${data.maxQuestions || 10}`;
+        finalScoreElement.textContent = scoreText;
+      }
+      showScreen(endScreen);
+
+      // Play Game Over Sound
+      try {
+        const gameOverSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/game-over-voice.mp3';
+        const gameOverSound = new Audio(gameOverSoundPath);
+        gameOverSound.play().catch(error => {
+          console.warn('Could not autoplay game over sound:', error);
+        });
+      } catch (error) {
+        console.error('Error creating or playing game over sound:', error);
+      }
+    }
+  });
+
+  // Event listener for the Start Button
+  if (startButton) {
+    startButton.addEventListener('click', () => {
+      console.log('Start Game button clicked');
+      hytopia.sendData({ type: 'start-game' });
+      showScreen(gameHud);
+      
+      // Play start game sound
+      try {
+        const startSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/start-game.mp3';
+        const startSound = new Audio(startSoundPath);
+        startSound.play().catch(error => {
+          console.warn('Could not autoplay start game sound:', error);
+        });
+      } catch (error) {
+        console.error('Error creating or playing start game sound:', error);
+      }
+    });
+  }
+
+  // Event listener for the Play Again Button
+  if (playAgainButton) {
+    playAgainButton.addEventListener('click', () => {
+      console.log('Play Again clicked');
+      showScreen(startScreen);
+      
+      // Add vibration feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    });
+  }
+
+  // Initialize D-Pad controls
+  setupDpadControls();
+
+  // Play welcome sound on load
+  try {
+    const welcomeSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/opening-voice.mp3';
+    const welcomeSound = new Audio(welcomeSoundPath);
+    welcomeSound.play().catch(error => {
+      console.warn('Could not autoplay welcome sound:', error);
+    });
+  } catch (error) {
+    console.error('Error creating or playing welcome sound:', error);
+  }
+
+  // Initialize with start screen
+  showScreen(startScreen);
+  console.log('Mobile UI Loaded. Showing Start Screen.');
+</script> 
