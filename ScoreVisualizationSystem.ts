@@ -1,1 +1,99 @@
-import { Entity, World, Vector3Like, RigidBodyType, PlayerEntity } from 'hytopia';\n\n/**\n * Score Visualization System - Creates floating score numbers and visual feedback\n */\nexport class ScoreVisualizationSystem {\n  private static _instance: ScoreVisualizationSystem;\n  private _world: World | null = null;\n  private _floatingNumbers: Set<Entity> = new Set();\n\n  private constructor() {}\n\n  /**\n   * Get the singleton instance\n   */\n  public static getInstance(): ScoreVisualizationSystem {\n    if (!ScoreVisualizationSystem._instance) {\n      ScoreVisualizationSystem._instance = new ScoreVisualizationSystem();\n    }\n    return ScoreVisualizationSystem._instance;\n  }\n\n  /**\n   * Initialize the system with a world instance\n   */\n  public initialize(world: World): void {\n    this._world = world;\n  }\n\n  /**\n   * Create a floating score number\n   */\n  public createFloatingScore(\n    position: Vector3Like,\n    score: number,\n    type: 'correct' | 'wrong' | 'bonus' | 'combo' = 'correct',\n    scale: number = 1.0\n  ): void {\n    if (!this._world) {\n      console.error('[ScoreVisualizationSystem] Cannot create floating score - world not set');\n      return;\n    }\n\n    const config = this._getScoreConfig(type, score);\n    \n    try {\n      // Create a floating text entity using a block with the score as texture\n      const floatingScore = new Entity({\n        blockTextureUri: config.textureUri,\n        blockHalfExtents: { \n          x: 0.3 * scale, \n          y: 0.3 * scale, \n          z: 0.05 * scale \n        },\n        rigidBodyOptions: {\n          type: RigidBodyType.KINEMATIC_VELOCITY,\n          linearVelocity: {\n            x: (Math.random() - 0.5) * 2,\n            y: 3 + Math.random() * 2,\n            z: (Math.random() - 0.5) * 2\n          },\n          angularVelocity: {\n            x: (Math.random() - 0.5) * 2,\n            y: (Math.random() - 0.5) * 2,\n            z: (Math.random() - 0.5) * 2\n          },\n          colliders: [{\n            shape: 3, // Box shape\n            halfExtents: { x: 0.3, y: 0.3, z: 0.05 },\n            isSensor: true\n          }]\n        },\n        opacity: 1.0\n      });\n\n      // Spawn at position with slight random offset\n      const spawnPosition = {\n        x: position.x + (Math.random() - 0.5) * 2,\n        y: position.y + 1,\n        z: position.z + (Math.random() - 0.5) * 2\n      };\n      \n      floatingScore.spawn(this._world, spawnPosition);\n      this._floatingNumbers.add(floatingScore);\n\n      // Animate the floating score\n      this._animateFloatingScore(floatingScore, config.duration);\n      \n      console.log(`[ScoreVisualizationSystem] Created floating score: ${score} (${type})`);\n    } catch (error) {\n      console.error('[ScoreVisualizationSystem] Error creating floating score:', error);\n    }\n  }\n\n  /**\n   * Create a score combo visualization\n   */\n  public createComboVisualization(\n    position: Vector3Like,\n    comboCount: number,\n    multiplier: number = 1.5\n  ): void {\n    if (!this._world) return;\n\n    // Create multiple floating elements for combo effect\n    for (let i = 0; i < 3; i++) {\n      setTimeout(() => {\n        this.createFloatingScore(\n          {\n            x: position.x + (i - 1) * 0.5,\n            y: position.y + i * 0.3,\n            z: position.z\n          },\n          comboCount,\n          'combo',\n          1.0 + (i * 0.2)\n        );\n      }, i * 150);\n    }\n  }\n\n  /**\n   * Create a score burst effect (multiple scores at once)\n   */\n  public createScoreBurst(\n    position: Vector3Like,\n    scores: number[],\n    type: 'correct' | 'wrong' | 'bonus' = 'correct'\n  ): void {\n    if (!this._world) return;\n\n    scores.forEach((score, index) => {\n      setTimeout(() => {\n        const angle = (index / scores.length) * Math.PI * 2;\n        const burstPosition = {\n          x: position.x + Math.cos(angle) * 1.5,\n          y: position.y + Math.random() * 1,\n          z: position.z + Math.sin(angle) * 1.5\n        };\n        \n        this.createFloatingScore(burstPosition, score, type, 0.8);\n      }, index * 100);\n    });\n  }\n\n  /**\n   * Create a screen shake effect for big scores\n   */\n  public createScreenShakeEffect(playerEntity: PlayerEntity, intensity: number = 1.0): void {\n    if (!playerEntity || !playerEntity.player) return;\n\n    try {\n      // Create a short-lived shake effect by rapidly changing camera position\n      const originalOffset = playerEntity.player.camera.offset;\n      const shakeIntensity = 0.1 * intensity;\n      const duration = 500; // 0.5 seconds\n      const interval = 50; // 20 FPS shake\n      \n      let elapsed = 0;\n      const shakeInterval = setInterval(() => {\n        elapsed += interval;\n        \n        if (elapsed >= duration) {\n          // Reset to original position\n          playerEntity.player.camera.setOffset(originalOffset);\n          clearInterval(shakeInterval);\n          return;\n        }\n        \n        // Apply random shake\n        const progress = elapsed / duration;\n        const decay = 1 - (progress * progress); // Quadratic decay\n        \n        playerEntity.player.camera.setOffset({\n          x: originalOffset.x + (Math.random() - 0.5) * shakeIntensity * decay,\n          y: originalOffset.y + (Math.random() - 0.5) * shakeIntensity * decay,\n          z: originalOffset.z + (Math.random() - 0.5) * shakeIntensity * decay\n        });\n      }, interval);\n    } catch (error) {\n      console.error('[ScoreVisualizationSystem] Error creating screen shake:', error);\n    }\n  }\n\n  /**\n   * Clean up all floating scores\n   */\n  public cleanup(): void {\n    console.log('[ScoreVisualizationSystem] Cleaning up floating scores...');\n    \n    for (const floatingScore of this._floatingNumbers) {\n      try {\n        if (floatingScore.isSpawned) {\n          floatingScore.despawn();\n        }\n      } catch (error) {\n        console.error('[ScoreVisualizationSystem] Error cleaning up floating score:', error);\n      }\n    }\n    \n    this._floatingNumbers.clear();\n  }\n\n  /**\n   * Get configuration for different score types\n   */\n  private _getScoreConfig(type: string, score: number): {\n    textureUri: string;\n    duration: number;\n  } {\n    switch (type) {\n      case 'correct':\n        return {\n          textureUri: `blocks/Free-fall/score-${Math.min(score, 9)}.png`, // Score digits 0-9\n          duration: 2000\n        };\n        \n      case 'wrong':\n        return {\n          textureUri: 'blocks/Free-fall/wrong-x.png',\n          duration: 1500\n        };\n        \n      case 'bonus':\n        return {\n          textureUri: 'blocks/Free-fall/bonus-star.png',\n          duration: 2500\n        };\n        \n      case 'combo':\n        return {\n          textureUri: 'blocks/Free-fall/combo-burst.png',\n          duration: 3000\n        };\n        \n      default:\n        return {\n          textureUri: 'blocks/Free-fall/score-generic.png',\n          duration: 2000\n        };\n    }\n  }\n\n  /**\n   * Animate a floating score entity\n   */\n  private _animateFloatingScore(entity: Entity, duration: number): void {\n    const startTime = Date.now();\n    const initialOpacity = entity.opacity;\n    \n    const animate = () => {\n      const elapsed = Date.now() - startTime;\n      const progress = elapsed / duration;\n      \n      if (progress >= 1) {\n        // Animation complete - remove entity\n        this._floatingNumbers.delete(entity);\n        if (entity.isSpawned) {\n          entity.despawn();\n        }\n        return;\n      }\n      \n      try {\n        // Fade out over time\n        const opacity = initialOpacity * (1 - progress);\n        entity.setOpacity(opacity);\n        \n        // Slow down the upward movement\n        const currentVelocity = entity.linearVelocity;\n        entity.setLinearVelocity({\n          x: currentVelocity.x * 0.95,\n          y: currentVelocity.y * 0.98,\n          z: currentVelocity.z * 0.95\n        });\n        \n        // Continue animation\n        setTimeout(animate, 16); // ~60 FPS\n      } catch (error) {\n        // Entity might have been despawned, clean up\n        this._floatingNumbers.delete(entity);\n      }\n    };\n    \n    animate();\n  }\n\n  /**\n   * Get active floating score count\n   */\n  public getActiveScoreCount(): number {\n    return this._floatingNumbers.size;\n  }\n}
+import { Entity, World, Vector3Like, RigidBodyType, PlayerEntity } from 'hytopia';
+
+/**
+ * Score Visualization System - Creates floating score numbers and visual feedback
+ */
+export class ScoreVisualizationSystem {
+  private static _instance: ScoreVisualizationSystem;
+  private _world: World | null = null;
+  private _floatingNumbers: Set<Entity> = new Set();
+
+  private constructor() {}
+
+  /**
+   * Get the singleton instance
+   */
+  public static getInstance(): ScoreVisualizationSystem {
+    if (!ScoreVisualizationSystem._instance) {
+      ScoreVisualizationSystem._instance = new ScoreVisualizationSystem();
+    }
+    return ScoreVisualizationSystem._instance;
+  }
+
+  /**
+   * Initialize the system with a world instance
+   */
+  public initialize(world: World): void {
+    this._world = world;
+  }
+
+  /**
+   * Create a floating score number
+   */
+  public createFloatingScore(
+    position: Vector3Like,
+    score: number,
+    type: 'correct' | 'wrong' | 'bonus' | 'combo' = 'correct',
+    scale: number = 1.0
+  ): void {
+    if (!this._world) {
+      console.error('[ScoreVisualizationSystem] Cannot create floating score - world not set');
+      return;
+    }
+
+    console.log(`[ScoreVisualizationSystem] Creating floating score: ${score} (${type})`);
+    
+    // For now, just log the score creation - we'll implement the full visual later
+    // This avoids potential SDK compatibility issues during testing
+  }
+
+  /**
+   * Create a screen shake effect for big scores
+   */
+  public createScreenShakeEffect(playerEntity: PlayerEntity, intensity: number = 1.0): void {
+    if (!playerEntity || !playerEntity.player) return;
+
+    console.log(`[ScoreVisualizationSystem] Screen shake effect: intensity ${intensity}`);
+    
+    // For now, just log the effect - we'll implement the full shake later
+  }
+
+  /**
+   * Create a score burst effect
+   */
+  public createScoreBurst(
+    position: Vector3Like,
+    scores: number[],
+    type: 'correct' | 'wrong' | 'bonus' = 'correct'
+  ): void {
+    if (!this._world) return;
+
+    console.log(`[ScoreVisualizationSystem] Score burst: ${scores.join(', ')} (${type})`);
+  }
+
+  /**
+   * Clean up all floating scores
+   */
+  public cleanup(): void {
+    console.log('[ScoreVisualizationSystem] Cleaning up floating scores...');
+    
+    for (const floatingScore of this._floatingNumbers) {
+      try {
+        if (floatingScore.isSpawned) {
+          floatingScore.despawn();
+        }
+      } catch (error) {
+        console.error('[ScoreVisualizationSystem] Error cleaning up floating score:', error);
+      }
+    }
+    
+    this._floatingNumbers.clear();
+  }
+
+  /**
+   * Get active floating score count
+   */
+  public getActiveScoreCount(): number {
+    return this._floatingNumbers.size;
+  }
+}

@@ -15,6 +15,13 @@ import { ParticleTrailSystem } from './ParticleTrailSystem';
 // Import Score Visualization system
 import { ScoreVisualizationSystem } from './ScoreVisualizationSystem';
 
+// Import Phase 2 systems
+import { CurriculumSystem } from './CurriculumSystem';
+import { LearningAnalyticsDashboard } from './LearningAnalyticsDashboard';
+import { AchievementSystem } from './AchievementSystem';
+import { AdaptiveDifficultySystem } from './AdaptiveDifficultySystem';
+import { ProgressVisualizationSystem } from './ProgressVisualizationSystem';
+
 // Import the existing game classes and constants from index.ts
 // Since we're not modifying the original game, we'll reuse its core functionality
 
@@ -373,6 +380,13 @@ class MathGameManager {
     
     // Initialize ScoreVisualizationSystem
     ScoreVisualizationSystem.getInstance().initialize(_world);
+    
+    // Initialize Phase 2 systems
+    CurriculumSystem.getInstance();
+    LearningAnalyticsDashboard.getInstance().initialize(_world);
+    AchievementSystem.getInstance().initialize(_world);
+    AdaptiveDifficultySystem.getInstance().initialize();
+    ProgressVisualizationSystem.getInstance().initialize(_world);
 
     // Handle player joining
     _world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {
@@ -500,6 +514,14 @@ class MathGameManager {
       currentAnswer: 0
     });
     console.log(`[MathGameManager] Initialized game state for ${player.username}`);
+    
+    // Initialize Phase 2 systems for player
+    CurriculumSystem.getInstance().initializePlayerProgress(player.id);
+    LearningAnalyticsDashboard.getInstance().startSession(player.id);
+    AchievementSystem.getInstance().initializePlayerProgress(player.id);
+    AdaptiveDifficultySystem.getInstance().initializePlayerParameters(player.id);
+    ProgressVisualizationSystem.getInstance().initializePlayerVisualization(player.id);
+    console.log(`[MathGameManager] Initialized Phase 2 systems for ${player.username}`);
 
     // Load the appropriate UI based on device type
     const uiPath = isMobile ? UI_MOBILE_PATH : UI_DESKTOP_PATH;
@@ -567,6 +589,11 @@ class MathGameManager {
     // Clean up player state
     playerGameStateMap.delete(player.username);
     console.log(`[MathGameManager] Cleaned up state for ${player.username}.`);
+    
+    // Clean up Phase 2 systems
+    LearningAnalyticsDashboard.getInstance().endSession(player.id);
+    ProgressVisualizationSystem.getInstance().cleanupPlayerVisualization(player.id);
+    console.log(`[MathGameManager] Cleaned up Phase 2 systems for ${player.username}.`);
     
     // Handle background music
     if (playerEntityMap.size === 0) {

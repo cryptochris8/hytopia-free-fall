@@ -25,6 +25,13 @@ import { ParticleTrailSystem } from './ParticleTrailSystem';
 // Import Score Visualization system
 import { ScoreVisualizationSystem } from './ScoreVisualizationSystem';
 
+// Import Phase 2 systems
+import { CurriculumSystem } from './CurriculumSystem';
+import { LearningAnalyticsDashboard } from './LearningAnalyticsDashboard';
+import { AchievementSystem } from './AchievementSystem';
+import { AdaptiveDifficultySystem } from './AdaptiveDifficultySystem';
+import { ProgressVisualizationSystem } from './ProgressVisualizationSystem';
+
 declare module 'hytopia' {
   interface EventPayloads {
     'correctAnswer': { player: Player };
@@ -362,9 +369,20 @@ class FallingPlayerController extends BaseEntityController {
 class AnswerBlocksManager {
   private _blocks: Entity[] = [];
   private _world: World; // Make world accessible if needed later, otherwise keep private
+  private _currentQuestion: any = null; // Store current question for Phase 2 systems
 
   constructor(world: World) {
     this._world = world;
+  }
+  
+  // Method to set current question for Phase 2 systems
+  public setCurrentQuestion(question: any): void {
+    this._currentQuestion = question;
+  }
+  
+  // Method to get current question for Phase 2 systems
+  public getCurrentQuestion(): any {
+    return this._currentQuestion;
   }
 
   // Method to clear existing blocks
@@ -809,6 +827,13 @@ class MathGameManager {
     // Initialize ScoreVisualizationSystem
     ScoreVisualizationSystem.getInstance().initialize(_world);
     
+    // Initialize Phase 2 systems
+    CurriculumSystem.getInstance();
+    LearningAnalyticsDashboard.getInstance().initialize(_world);
+    AchievementSystem.getInstance().initialize(_world);
+    AdaptiveDifficultySystem.getInstance().initialize();
+    ProgressVisualizationSystem.getInstance().initialize(_world);
+    
     // Make answer blocks manager accessible globally for magnet power-up
     (_world as any)._answerBlocksManager = this._answerBlocksManager;
 
@@ -872,6 +897,14 @@ class MathGameManager {
         currentGravityScale: PLAYER_GRAVITY_SCALE // Initialize gravity scale
       });
       console.log(`[MathGameManager] Initialized game state for ${player.username}`);
+      
+      // Initialize Phase 2 systems for player
+      CurriculumSystem.getInstance().initializePlayerProgress(player.id);
+      LearningAnalyticsDashboard.getInstance().startSession(player.id);
+      AchievementSystem.getInstance().initializePlayerProgress(player.id);
+      AdaptiveDifficultySystem.getInstance().initializePlayerParameters(player.id);
+      ProgressVisualizationSystem.getInstance().initializePlayerVisualization(player.id);
+      console.log(`[MathGameManager] Initialized Phase 2 systems for ${player.username}`);
 
       // Load the UI file for the player
       player.ui.load(UI_INDEX_PATH);
@@ -932,6 +965,21 @@ class MathGameManager {
             playerData.entity.setGravityScale(PLAYER_GRAVITY_SCALE);
           }
         }
+        
+        // Handle progress display requests
+        if (data.type === 'show-progress') {
+          console.log(`[MathGameManager] Progress display requested by ${player.username}`);
+          const playerEntity = playerData.entity;
+          ProgressVisualizationSystem.getInstance().displayProgressSummary(playerEntity);
+        }
+        
+        // Handle analytics dashboard requests
+        if (data.type === 'show-analytics') {
+          console.log(`[MathGameManager] Analytics dashboard requested by ${player.username}`);
+          const playerEntity = playerData.entity;
+          LearningAnalyticsDashboard.getInstance().displayDashboard(playerEntity);
+        }
+        
         // Add handlers for other potential UI messages if needed
       });
       // --- End UI Data Listener ---
@@ -1004,6 +1052,11 @@ class MathGameManager {
       // Clean up particle trails
       ParticleTrailSystem.getInstance().stopTrail(player.username);
       
+      // Clean up Phase 2 systems
+      LearningAnalyticsDashboard.getInstance().endSession(player.id);
+      ProgressVisualizationSystem.getInstance().cleanupPlayerVisualization(player.id);
+      console.log(`[MathGameManager] Cleaned up Phase 2 systems for ${player.username}.`);
+      
       // Clean up score visualizations
       ScoreVisualizationSystem.getInstance().cleanup();
       
@@ -1051,6 +1104,38 @@ class MathGameManager {
         // Add screen shake for big scores
         if (scoreMultiplier > 1) {
           ScoreVisualizationSystem.getInstance().createScreenShakeEffect(playerEntity, 0.5);
+        }
+        
+        // Phase 2 system integration for correct answers
+        const currentQuestion = this._answerBlocksManager.getCurrentQuestion();
+        if (currentQuestion) {
+          // Record curriculum progress
+          CurriculumSystem.getInstance().recordAnswer(player.id, currentQuestion.id || 'unknown', currentQuestion.answer, 1000);
+          
+          // Record analytics
+          LearningAnalyticsDashboard.getInstance().recordQuestionAttempt(player.id, currentQuestion.topic || 'basic_arithmetic', true, 1000);
+          
+          // Record achievement progress
+          AchievementSystem.getInstance().recordAction(player.id, 'correct_answer', { 
+            topic: currentQuestion.topic || 'basic_arithmetic', 
+            responseTime: 1000 
+          });
+          
+          // Record adaptive difficulty
+          AdaptiveDifficultySystem.getInstance().recordQuestionAttempt(
+            player.id, 
+            currentQuestion.id || 'unknown', 
+            currentQuestion.topic || 'basic_arithmetic', 
+            'intermediate', 
+            true, 
+            1000
+          );
+          
+          // Check for achievement notifications
+          const notifications = AchievementSystem.getInstance().getPendingNotifications(player.id);
+          notifications.forEach(notification => {
+            ProgressVisualizationSystem.getInstance().showAchievementNotification(playerEntity, notification);
+          });
         }
 
         // --- NEW: Increase Gravity (Only for Moderate/Hard) ---
@@ -1196,6 +1281,32 @@ class MathGameManager {
         // Increment questions presented, but not score
         playerState.questionsPresented++; // Increment happens here
         playerGameStateMap.set(player.username, playerState); // Update state immediately
+        
+        // Phase 2 system integration for wrong answers
+        const currentQuestion = this._answerBlocksManager.getCurrentQuestion();
+        if (currentQuestion) {
+          // Record curriculum progress (wrong answer)
+          CurriculumSystem.getInstance().recordAnswer(player.id, currentQuestion.id || 'unknown', -1, 2000);
+          
+          // Record analytics (wrong answer)
+          LearningAnalyticsDashboard.getInstance().recordQuestionAttempt(player.id, currentQuestion.topic || 'basic_arithmetic', false, 2000);
+          
+          // Record achievement progress (wrong answer)
+          AchievementSystem.getInstance().recordAction(player.id, 'wrong_answer', { 
+            topic: currentQuestion.topic || 'basic_arithmetic', 
+            responseTime: 2000 
+          });
+          
+          // Record adaptive difficulty (wrong answer)
+          AdaptiveDifficultySystem.getInstance().recordQuestionAttempt(
+            player.id, 
+            currentQuestion.id || 'unknown', 
+            currentQuestion.topic || 'basic_arithmetic', 
+            'intermediate', 
+            false, 
+            2000
+          );
+        }
 
         // --- NEW: Reset Gravity ---
         playerState.currentGravityScale = PLAYER_GRAVITY_SCALE; // Reset to default
@@ -1398,6 +1509,33 @@ class MathGameManager {
         console.log(`[MathGameManager] generateNewProblem called for inactive player ${player.username}, ignoring.`);
         return; // Don't generate if game isn't active for this player
      }
+     
+     // Check if we should use adaptive curriculum questions
+     const adaptiveQuestions = AdaptiveDifficultySystem.getInstance().getAdaptiveQuestions(player.id, 1);
+     if (adaptiveQuestions.length > 0) {
+       const question = adaptiveQuestions[0];
+       console.log(`[MathGameManager] Using adaptive curriculum question for ${player.username}: ${question.question}`);
+       
+       // Store the question for answer validation
+       this._answerBlocksManager.setCurrentQuestion(question);
+       
+       // Generate answer blocks
+       this._answerBlocksManager.generateAnswerBlocks(question.correctAnswer, question.wrongAnswers);
+       
+       // Update UI with the question
+       player.ui.sendData({
+         type: 'problem',
+         question: question.question,
+         operation: '=' // For display purposes
+       });
+       
+       // Record session activity
+       AchievementSystem.getInstance().recordAction(player.id, 'question_answered');
+       
+       return;
+     }
+     
+     // Fallback to original problem generation if no adaptive questions available
      
      // --- Difficulty Adjustments ---
      const difficulty = playerState.difficulty;

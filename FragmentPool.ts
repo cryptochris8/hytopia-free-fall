@@ -1,4 +1,4 @@
-import { Entity, Vector3, RigidBodyType, World, Vector3Like, EntityOptions } from 'hytopia';
+import { Entity, Vector3, RigidBodyType, World, Vector3Like, EntityOptions, ColliderShape } from 'hytopia';
 import { FragmentTextureManager } from './FragmentTextureManager';
 
 /**
@@ -19,7 +19,7 @@ export class FragmentPool {
       type: RigidBodyType.DYNAMIC,
       gravityScale: 0.8,
       colliders: [{
-        shape: 3, // Box shape
+        shape: ColliderShape.BLOCK, // Block shape
         halfExtents: { x: 0.15, y: 0.15, z: 0.15 },
         isSensor: true
       }]

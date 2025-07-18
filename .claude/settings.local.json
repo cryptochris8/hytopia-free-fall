@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(bun run:*)",
+      "Bash(timeout 10 bun run:*)"
+    ]
+  },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "topia-helper"
