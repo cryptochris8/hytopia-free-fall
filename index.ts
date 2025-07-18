@@ -16,6 +16,15 @@ import {
   RewindPowerUp 
 } from './powerups';
 
+// Import Fragment Pool system
+import { FragmentPool } from './FragmentPool';
+
+// Import Particle Trail system
+import { ParticleTrailSystem } from './ParticleTrailSystem';
+
+// Import Score Visualization system
+import { ScoreVisualizationSystem } from './ScoreVisualizationSystem';
+
 declare module 'hytopia' {
   interface EventPayloads {
     'correctAnswer': { player: Player };
@@ -262,12 +271,22 @@ class FallingPlayerController extends BaseEntityController {
         entity.startModelLoopedAnimations([PLAYER_FALL_ANIMATION]);
         this.isFalling = true;
         this.isMoving = false; // Reset moving state
+        
+        // Start particle trails when falling
+        if (entity.player?.username) {
+          ParticleTrailSystem.getInstance().startTrail(entity, entity.player.username, ['sparkleTrail', 'windTrail']);
+        }
       } else if (!shouldShowFallAnimation && this.isFalling) {
         // Switch back to idle/walk
         console.log(`[FallingPlayerController] Transitioning from fall animation for ${entity.player?.username || entity.id}`);
         entity.stopModelAnimations([PLAYER_FALL_ANIMATION]);
         entity.startModelLoopedAnimations([PLAYER_INITIAL_ANIMATION]);
         this.isFalling = false;
+        
+        // Stop particle trails when not falling
+        if (entity.player?.username) {
+          ParticleTrailSystem.getInstance().stopTrail(entity.player.username);
+        }
       }
     } catch (error) {
       console.error(`[FallingPlayerController] Error managing fall animation for entity ${entity.id}:`, error);
@@ -482,62 +501,25 @@ class AnswerBlocksManager {
    * @param textureUri The texture of the block that broke.
    */
   private _spawnBreakEffect(position: Vector3, textureUri: string, fragmentCount: number = ANSWER_BLOCK_BREAK_FRAGMENTS, durationMs: number = ANSWER_BLOCK_BREAK_DURATION_MS): void {
-    const baseVelocity = ANSWER_BLOCK_BREAK_VELOCITY;
-    const angularSpeed = ANSWER_BLOCK_BREAK_ANGULAR_SPEED;
-
-    console.log(`[AnswerBlocksManager._spawnBreakEffect] Spawning ${fragmentCount} fragments at ${JSON.stringify(position)}`);
-
-    for (let i = 0; i < fragmentCount; i++) {
-      // Calculate a random direction vector
-      const dirX = Math.random() - 0.5;
-      const dirY = Math.random() - 0.5;
-      const dirZ = Math.random() - 0.5;
-      // Normalize the direction vector (make its length 1)
-      const length = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-      const normX = length === 0 ? 0 : dirX / length;
-      const normY = length === 0 ? 1 : dirY / length; // Default upwards if length is 0
-      const normZ = length === 0 ? 0 : dirZ / length;
-
-      // Create fragment entity
-      const fragment = new Entity({
-        blockTextureUri: textureUri,
-        blockHalfExtents: ANSWER_BLOCK_BREAK_FRAGMENT_HALF_EXTENTS,
-        rigidBodyOptions: {
-          type: RigidBodyType.DYNAMIC, // Fragments need physics
-          gravityScale: ANSWER_BLOCK_BREAK_FRAGMENT_GRAVITY,
-          linearVelocity: { // Initial outward velocity
-            x: normX * baseVelocity * (0.5 + Math.random() * 0.5), // Vary speed slightly
-            y: normY * baseVelocity * (0.5 + Math.random() * 0.5),
-            z: normZ * baseVelocity * (0.5 + Math.random() * 0.5)
-          },
-          angularVelocity: { // Random spin
-            x: (Math.random() - 0.5) * angularSpeed,
-            y: (Math.random() - 0.5) * angularSpeed,
-            z: (Math.random() - 0.5) * angularSpeed
-          },
-          colliders: [{
-            shape: ColliderShape.BLOCK,
-            halfExtents: ANSWER_BLOCK_BREAK_FRAGMENT_HALF_EXTENTS,
-            isSensor: true // Make fragments sensors
-          }]
-        }
-      });
-
-      // Spawn fragment at the original block's position
-      try {
-        fragment.spawn(this._world, position);
-
-        // Schedule despawn
-        setTimeout(() => {
-          if (fragment.isSpawned) {
-            fragment.despawn();
-          }
-        }, durationMs);
-
-      } catch (error) {
-        console.error(`[AnswerBlocksManager._spawnBreakEffect] Error spawning/despawning fragment:`, error);
-      }
+    // Determine effect type based on block texture
+    let effectType: 'default' | 'explosive' | 'implosion' | 'spiral' = 'default';
+    
+    if (textureUri.includes('emerald')) {
+      effectType = 'spiral'; // Correct answers get a nice spiral effect
+    } else if (textureUri.includes('fire')) {
+      effectType = 'explosive'; // Wrong answers explode
     }
+    
+    // Use the Fragment Pool system for optimized fragment management
+    FragmentPool.getInstance().spawnBreakEffect(
+      position,
+      textureUri,
+      fragmentCount,
+      durationMs,
+      ANSWER_BLOCK_BREAK_VELOCITY,
+      ANSWER_BLOCK_BREAK_ANGULAR_SPEED,
+      effectType
+    );
   }
 }
 
@@ -818,6 +800,15 @@ class MathGameManager {
     // Initialize PowerUpManager
     PowerUpManager.getInstance().initialize(_world);
     
+    // Initialize FragmentPool
+    FragmentPool.getInstance(100).initialize(_world);
+    
+    // Initialize ParticleTrailSystem
+    ParticleTrailSystem.getInstance().initialize(_world);
+    
+    // Initialize ScoreVisualizationSystem
+    ScoreVisualizationSystem.getInstance().initialize(_world);
+    
     // Make answer blocks manager accessible globally for magnet power-up
     (_world as any)._answerBlocksManager = this._answerBlocksManager;
 
@@ -1010,6 +1001,12 @@ class MathGameManager {
       playerGameStateMap.delete(player.username);
       console.log(`[MathGameManager] Cleaned up state for ${player.username}.`);
       
+      // Clean up particle trails
+      ParticleTrailSystem.getInstance().stopTrail(player.username);
+      
+      // Clean up score visualizations
+      ScoreVisualizationSystem.getInstance().cleanup();
+      
       // If this was the last player, maybe clear blocks?
       if (playerEntityMap.size === 0) {
          console.log(`[MathGameManager] Last player left, clearing answer blocks.`);
@@ -1042,6 +1039,19 @@ class MathGameManager {
         const scoreMultiplier = DoublePointsPowerUp.getScoreMultiplier(player.username);
         playerState.score += scoreMultiplier;
         playerState.questionsPresented++; // Increment happens here
+        
+        // Create floating score visualization
+        ScoreVisualizationSystem.getInstance().createFloatingScore(
+          playerEntity.position,
+          scoreMultiplier,
+          'correct',
+          1.2
+        );
+        
+        // Add screen shake for big scores
+        if (scoreMultiplier > 1) {
+          ScoreVisualizationSystem.getInstance().createScreenShakeEffect(playerEntity, 0.5);
+        }
 
         // --- NEW: Increase Gravity (Only for Moderate/Hard) ---
         if (playerState.difficulty !== 'beginner') {
@@ -1118,6 +1128,9 @@ class MathGameManager {
                 playerData.entity.stopModelAnimations([PLAYER_INITIAL_ANIMATION, PLAYER_WALK_ANIMATION]);
                 playerData.entity.startModelLoopedAnimations([PLAYER_FALL_ANIMATION]);
                 
+                // Start particle trails for final fall with more intense effects
+                ParticleTrailSystem.getInstance().startTrail(playerData.entity, player.username, ['sparkleTrail', 'speedTrail', 'windTrail']);
+                
                 // Start visual effects for the fall
                 this._createFallingEffects(player, 3000);
 
@@ -1154,6 +1167,14 @@ class MathGameManager {
         const controller = playerData.controller;
 
         console.log(`[MathGameManager] Wrong answer processed for ${player.username}. Questions presented: ${playerState.questionsPresented}/${MAX_QUESTIONS}`);
+        
+        // Create floating "wrong" visualization
+        ScoreVisualizationSystem.getInstance().createFloatingScore(
+          playerEntity.position,
+          0,
+          'wrong',
+          1.5
+        );
 
         // Check for Shield protection
         if (ShieldBubblePowerUp.consumeShield(player.username)) {
@@ -1236,6 +1257,9 @@ class MathGameManager {
                 playerData.entity.stopModelAnimations([PLAYER_INITIAL_ANIMATION, PLAYER_WALK_ANIMATION]);
                 playerData.entity.startModelLoopedAnimations([PLAYER_FALL_ANIMATION]);
                 
+                // Start particle trails for final fall with more intense effects
+                ParticleTrailSystem.getInstance().startTrail(playerData.entity, player.username, ['sparkleTrail', 'speedTrail', 'windTrail']);
+                
                 // Start visual effects for the fall
                 this._createFallingEffects(player, 3000);
 
@@ -1275,6 +1299,16 @@ class MathGameManager {
 
         console.log(`[MathGameManager] Player ${player.username} successfully landed. Processing game over.`);
         const finalScore = playerState.score;
+        
+        // Create final score burst visualization
+        ScoreVisualizationSystem.getInstance().createScoreBurst(
+          playerData.entity.position,
+          [finalScore, finalScore, finalScore], // Triple burst for final score
+          'bonus'
+        );
+        
+        // Screen shake for game completion
+        ScoreVisualizationSystem.getInstance().createScreenShakeEffect(playerData.entity, 1.0);
 
         // Set the hasLanded flag in the controller to prevent downward rotation
         playerData.controller.setLanded(true);
@@ -1325,6 +1359,10 @@ class MathGameManager {
         } catch (error) {
           console.error(`[MathGameManager] Error playing ${AUDIO_SFX_LANDING} for ${player.username}:`, error);
         }
+        
+        // Stop particle trails and create landing burst effect
+        ParticleTrailSystem.getInstance().stopTrail(player.username);
+        ParticleTrailSystem.getInstance().createBurst(playerData.entity.position, 'landing');
 
         // Add a longer delay before showing game over screen
         // This gives time for landing effects and sounds to play

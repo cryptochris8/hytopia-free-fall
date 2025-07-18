@@ -6,6 +6,15 @@ import type { Vector3 } from 'hytopia';
 import type { CollisionCallback } from 'hytopia';
 import type { BlockType } from 'hytopia';
 
+// Import Fragment Pool system
+import { FragmentPool } from './FragmentPool';
+
+// Import Particle Trail system
+import { ParticleTrailSystem } from './ParticleTrailSystem';
+
+// Import Score Visualization system
+import { ScoreVisualizationSystem } from './ScoreVisualizationSystem';
+
 // Import the existing game classes and constants from index.ts
 // Since we're not modifying the original game, we'll reuse its core functionality
 
@@ -322,58 +331,25 @@ class AnswerBlocksManager {
     fragmentCount: number = ANSWER_BLOCK_BREAK_FRAGMENTS,
     durationMs: number = ANSWER_BLOCK_BREAK_DURATION_MS
   ): void {
-    const baseVelocity = ANSWER_BLOCK_BREAK_VELOCITY;
-    const angularSpeed = ANSWER_BLOCK_BREAK_ANGULAR_SPEED;
-
-    console.log(`[AnswerBlocksManager._spawnBreakEffect] Spawning ${fragmentCount} fragments at ${JSON.stringify(position)}`);
-
-    for (let i = 0; i < fragmentCount; i++) {
-      // Calculate random direction
-      const dirX = Math.random() - 0.5;
-      const dirY = Math.random() - 0.5;
-      const dirZ = Math.random() - 0.5;
-      const length = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-      const normX = length === 0 ? 0 : dirX / length;
-      const normY = length === 0 ? 1 : dirY / length;
-      const normZ = length === 0 ? 0 : dirZ / length;
-
-      // Create fragment
-      const fragment = new Entity({
-        blockTextureUri: textureUri,
-        blockHalfExtents: ANSWER_BLOCK_BREAK_FRAGMENT_HALF_EXTENTS,
-        rigidBodyOptions: {
-          type: RigidBodyType.DYNAMIC,
-          gravityScale: ANSWER_BLOCK_BREAK_FRAGMENT_GRAVITY,
-          linearVelocity: {
-            x: normX * baseVelocity * (0.5 + Math.random() * 0.5),
-            y: normY * baseVelocity * (0.5 + Math.random() * 0.5),
-            z: normZ * baseVelocity * (0.5 + Math.random() * 0.5)
-          },
-          angularVelocity: {
-            x: (Math.random() - 0.5) * angularSpeed,
-            y: (Math.random() - 0.5) * angularSpeed,
-            z: (Math.random() - 0.5) * angularSpeed
-          },
-          colliders: [{
-            shape: ColliderShape.BLOCK,
-            halfExtents: ANSWER_BLOCK_BREAK_FRAGMENT_HALF_EXTENTS,
-            isSensor: true
-          }]
-        }
-      });
-
-      try {
-        fragment.spawn(this._world, position);
-
-        setTimeout(() => {
-          if (fragment.isSpawned) {
-            fragment.despawn();
-          }
-        }, durationMs);
-      } catch (error) {
-        console.error(`[AnswerBlocksManager._spawnBreakEffect] Error spawning/despawning fragment:`, error);
-      }
+    // Determine effect type based on block texture
+    let effectType: 'default' | 'explosive' | 'implosion' | 'spiral' = 'default';
+    
+    if (textureUri.includes('emerald')) {
+      effectType = 'spiral'; // Correct answers get a nice spiral effect
+    } else if (textureUri.includes('fire')) {
+      effectType = 'explosive'; // Wrong answers explode
     }
+    
+    // Use the Fragment Pool system for optimized fragment management
+    FragmentPool.getInstance().spawnBreakEffect(
+      position,
+      textureUri,
+      fragmentCount,
+      durationMs,
+      ANSWER_BLOCK_BREAK_VELOCITY,
+      ANSWER_BLOCK_BREAK_ANGULAR_SPEED,
+      effectType
+    );
   }
 }
 
@@ -388,6 +364,15 @@ class MathGameManager {
   constructor(private _world: World, backgroundMusic: Audio) {
     this._answerBlocksManager = new AnswerBlocksManager(_world);
     this._backgroundMusic = backgroundMusic;
+    
+    // Initialize FragmentPool
+    FragmentPool.getInstance(100).initialize(_world);
+    
+    // Initialize ParticleTrailSystem
+    ParticleTrailSystem.getInstance().initialize(_world);
+    
+    // Initialize ScoreVisualizationSystem
+    ScoreVisualizationSystem.getInstance().initialize(_world);
 
     // Handle player joining
     _world.on(PlayerEvent.JOINED_WORLD, ({ player }) => {

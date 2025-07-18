@@ -1,6 +1,6 @@
 {
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "topia-helper"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }
