@@ -413,6 +413,7 @@ class AnswerBlocksManager {
     // The collision logic below will handle player-specific answer checking.
 
     const answers = [correctAnswer, ...wrongAnswers];
+    console.log(`[AnswerBlocksManager] Generating blocks for correct answer: ${correctAnswer}, wrong answers: ${wrongAnswers.join(', ')}`);
     const positions = this._generateBlockPositions(answers.length);
 
     // Shuffle positions (same as before)
@@ -425,6 +426,8 @@ class AnswerBlocksManager {
     answers.forEach((answerValue, index) => { // Renamed 'answer' to 'answerValue' to avoid conflict
       const texturePath = `${ANSWER_BLOCK_TEXTURE_PATH}${answerValue}.png`;
       const blockPosition = positions[index]; // Store position for spawning effect
+      console.log(`[AnswerBlocksManager] Creating block ${index}: value=${answerValue}, position=${JSON.stringify(blockPosition)}`);
+      
 
       const block = new Entity({
         blockTextureUri: texturePath,
@@ -479,6 +482,8 @@ class AnswerBlocksManager {
       console.log(`[AnswerBlocksManager] Attempting to spawn block for answer ${answerValue} at position ${JSON.stringify(blockPosition)}, Texture: ${texturePath}`);
       block.spawn(this._world, blockPosition);
       block.setRotation({ x: 0, y: 1, z: 0, w: 0 });
+      // Store the answer value with the block for debugging
+      (block as any)._answerValue = answerValue;
       this._blocks.push(block);
     });
     console.log(`[AnswerBlocksManager] Spawned ${this._blocks.length} new blocks.`);
@@ -1707,6 +1712,7 @@ class MathGameManager {
 
     // Log for debugging
     console.log(`[MathGameManager] Generated new problem for ${player.username} (Difficulty: ${difficulty}): ${num1} ${operation} ${num2} = ${answer}. Wrong answers range/max: ${wrongAnswerRange}/${wrongAnswerMax}`);
+    console.log(`[MathGameManager] Player ${player.username} expected answer stored: ${playerState.currentAnswer}`);
   }
 
   // Modified to accept difficulty-based range and max value
