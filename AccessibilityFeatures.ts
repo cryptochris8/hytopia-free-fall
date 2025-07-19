@@ -122,8 +122,12 @@ export class AccessibilityFeatures {
       this._world = world;
       this._setupAudioCues();
       this._setupEventListeners();
-      this._applyAccessibilitySettings();
-      this._setupKeyboardNavigation();
+      
+      // Only apply UI settings in browser environment
+      if (typeof document !== 'undefined') {
+        this._applyAccessibilitySettings();
+        this._setupKeyboardNavigation();
+      }
       
       console.log('[AccessibilityFeatures] Initialized successfully');
       this._announceAccessibilityStatus();
@@ -242,7 +246,7 @@ export class AccessibilityFeatures {
    * Apply colorblind-friendly color scheme
    */
   public applyColorBlindFriendlyColors(colorBlindType: 'protanopia' | 'deuteranopia' | 'tritanopia' = 'deuteranopia'): void {
-    if (!this._options.colorBlindFriendly) return;
+    if (!this._options.colorBlindFriendly || typeof document === 'undefined') return;
 
     const palette = this._colorBlindPalettes.get(colorBlindType);
     if (!palette) return;
@@ -260,6 +264,9 @@ export class AccessibilityFeatures {
    * Adjust text sizes throughout the interface
    */
   public adjustTextSizes(): void {
+    // Only operate in browser environment
+    if (typeof document === 'undefined') return;
+    
     const sizeMultipliers = {
       'small': 0.8,
       'medium': 1.0,
@@ -287,7 +294,7 @@ export class AccessibilityFeatures {
    * Enable high contrast mode
    */
   public applyHighContrast(): void {
-    if (!this._options.highContrast) return;
+    if (!this._options.highContrast || typeof document === 'undefined') return;
 
     document.body.classList.add('high-contrast');
     
@@ -322,7 +329,7 @@ export class AccessibilityFeatures {
    * Enable reduced motion mode
    */
   public applyReducedMotion(): void {
-    if (!this._options.reducedMotion) return;
+    if (!this._options.reducedMotion || typeof document === 'undefined') return;
 
     document.body.classList.add('reduced-motion');
     
@@ -345,6 +352,9 @@ export class AccessibilityFeatures {
    * Setup keyboard navigation
    */
   public setupKeyboardNavigation(): void {
+    // Only setup in browser environment
+    if (typeof document === 'undefined') return;
+    
     document.addEventListener('keydown', (event) => {
       // Tab navigation
       if (event.key === 'Tab') {
@@ -379,7 +389,7 @@ export class AccessibilityFeatures {
    * Enable one-handed mode
    */
   public enableOneHandedMode(): void {
-    if (!this._options.oneHandedMode) return;
+    if (!this._options.oneHandedMode || typeof document === 'undefined') return;
 
     // Adjust UI layout for one-handed use
     const mobileControls = document.querySelector('.mobile-controls') as HTMLElement;
@@ -431,7 +441,7 @@ export class AccessibilityFeatures {
    * Initialize speech synthesis
    */
   private _initializeSpeechSynthesis(): void {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && typeof window.speechSynthesis !== 'undefined') {
       this._speechSynthesis = window.speechSynthesis;
       
       // Wait for voices to load
@@ -746,10 +756,13 @@ export class AccessibilityFeatures {
    */
   private _loadUserPreferences(): void {
     try {
-      const stored = localStorage.getItem('accessibilityOptions');
-      if (stored) {
-        const options = JSON.parse(stored) as Partial<AccessibilityOptions>;
-        this._options = { ...this._options, ...options };
+      // Only access localStorage in browser environment
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem('accessibilityOptions');
+        if (stored) {
+          const options = JSON.parse(stored) as Partial<AccessibilityOptions>;
+          this._options = { ...this._options, ...options };
+        }
       }
     } catch (error) {
       console.warn('[AccessibilityFeatures] Failed to load user preferences:', error);
@@ -761,7 +774,10 @@ export class AccessibilityFeatures {
    */
   private _saveUserPreferences(): void {
     try {
-      localStorage.setItem('accessibilityOptions', JSON.stringify(this._options));
+      // Only access localStorage in browser environment
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('accessibilityOptions', JSON.stringify(this._options));
+      }
     } catch (error) {
       console.warn('[AccessibilityFeatures] Failed to save user preferences:', error);
     }

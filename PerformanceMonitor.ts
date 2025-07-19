@@ -122,7 +122,7 @@ export class PerformanceMonitor {
 
       this._world = world;
       this._setupPerformanceTracking();
-      this._startMonitoring();
+      this.startMonitoring();
 
       console.log('[PerformanceMonitor] Initialized successfully');
       console.log(`[PerformanceMonitor] Target FPS: ${this._optimizationSettings.targetFPS}`);

@@ -87,8 +87,15 @@ export default class SocialFeaturesSystem {
     // Mark player as online
     this._onlinePlayers.add(player.id);
 
-    // Try to load from persisted data
-    const persistedData = await player.getPersistedData();
+    // Try to load from persisted data (if available)
+    let persistedData = null;
+    if (player.getPersistedData && typeof player.getPersistedData === 'function') {
+      try {
+        persistedData = await player.getPersistedData();
+      } catch (error) {
+        console.warn('[SocialFeaturesSystem] Failed to load persisted data:', error);
+      }
+    }
     
     if (persistedData && persistedData.socialProfile) {
       const profile = persistedData.socialProfile as any;
@@ -678,13 +685,20 @@ export default class SocialFeaturesSystem {
       blockedPlayers: Array.from(profile.blockedPlayers)
     };
 
-    player.getPersistedData().then(data => {
-      const updatedData = {
-        ...data,
-        socialProfile: storableProfile
-      };
-      player.setPersistedData(updatedData);
-    });
+    // Check if player has persisted data methods (may not be available in local dev)
+    if (player.getPersistedData && typeof player.getPersistedData === 'function') {
+      player.getPersistedData().then(data => {
+        const updatedData = {
+          ...data,
+          socialProfile: storableProfile
+        };
+        player.setPersistedData(updatedData);
+      }).catch(error => {
+        console.error('[SocialFeaturesSystem] Failed to save player profile:', error);
+      });
+    } else {
+      console.warn('[SocialFeaturesSystem] Player persistence not available in current environment');
+    }
   }
 
   private setupChatCommands(): void {

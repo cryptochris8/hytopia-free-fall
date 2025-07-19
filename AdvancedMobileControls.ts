@@ -208,10 +208,20 @@ export class AdvancedMobileControls {
    * Detect haptic feedback support
    */
   private _detectHapticSupport(): void {
-    this._hapticSupported = 'vibrate' in navigator || 
-                           'hapticFeedback' in navigator ||
-                           ('Accelerometer' in window) ||
-                           /iPhone|iPad|iPod/.test(navigator.userAgent);
+    try {
+      // Only detect haptic support in browser environment
+      if (typeof navigator !== 'undefined' && typeof window !== 'undefined') {
+        this._hapticSupported = 'vibrate' in navigator || 
+                               'hapticFeedback' in navigator ||
+                               ('Accelerometer' in window) ||
+                               /iPhone|iPad|iPod/.test(navigator.userAgent);
+      } else {
+        this._hapticSupported = false;
+      }
+    } catch (error) {
+      console.warn('[AdvancedMobileControls] Error detecting haptic support:', error);
+      this._hapticSupported = false;
+    }
   }
 
   /**
@@ -495,10 +505,13 @@ export class AdvancedMobileControls {
    */
   private _loadSettings(): void {
     try {
-      const stored = localStorage.getItem('mobileControlSettings');
-      if (stored) {
-        const settings = JSON.parse(stored) as Partial<MobileControlSettings>;
-        this._settings = { ...this._settings, ...settings };
+      // Only access localStorage in browser environment
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem('mobileControlSettings');
+        if (stored) {
+          const settings = JSON.parse(stored) as Partial<MobileControlSettings>;
+          this._settings = { ...this._settings, ...settings };
+        }
       }
     } catch (error) {
       console.warn('[AdvancedMobileControls] Failed to load settings:', error);
@@ -510,7 +523,10 @@ export class AdvancedMobileControls {
    */
   private _saveSettings(): void {
     try {
-      localStorage.setItem('mobileControlSettings', JSON.stringify(this._settings));
+      // Only access localStorage in browser environment
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('mobileControlSettings', JSON.stringify(this._settings));
+      }
     } catch (error) {
       console.warn('[AdvancedMobileControls] Failed to save settings:', error);
     }
