@@ -6,6 +6,7 @@
       "dependencies": {
         "@hytopia.com/assets": "^0.3.14",
         "hytopia": "^0.7.3",
+        "mediasoup": "^3.16.6",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -15,6 +16,9 @@
       },
     },
   },
+  "trustedDependencies": [
+    "mediasoup",
+  ],
   "packages": {
     "@colors/colors": ["@colors/colors@1.5.0", "", {}, "sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ=="],
 
@@ -278,7 +282,7 @@
 
     "hasown": ["hasown@2.0.2", "", { "dependencies": { "function-bind": "^1.1.2" } }, "sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ=="],
 
-    "hytopia": ["hytopia@0.7.3", "", { "dependencies": { "@gltf-transform/cli": "4.1.1", "archiver": "^7.0.1", "mediasoup": "3.15.7", "sharp": "0.33.5", "ws": "^8.18.2" }, "bin": { "hytopia": "bin/scripts.mjs" } }, "sha512-N6eD+gW9PErH3wqzLgC/tAWonIqK1/Q5GlOpR9eSfgF2F9zEdVBmb5ZAYk3iJo5zgXwy6nlkTBZfnwpAJ8QvMg=="],
+    "hytopia": ["hytopia@0.7.5", "", { "dependencies": { "@gltf-transform/cli": "4.1.1", "archiver": "^7.0.1", "mediasoup": "3.15.7", "sharp": "0.33.5", "ws": "^8.18.2" }, "bin": { "hytopia": "bin/scripts.mjs" } }, "sha512-Y0DQm1JTw+aV57+SyT36G5eYrYJNc7pAH5cz/7CjlIKbDY6NYgD64QFtjFaRf9P/K3rpBIZYdPpXvNFncWAD5g=="],
 
     "ieee754": ["ieee754@1.2.1", "", {}, "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA=="],
 
@@ -332,7 +336,7 @@
 
     "math-intrinsics": ["math-intrinsics@1.1.0", "", {}, "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="],
 
-    "mediasoup": ["mediasoup@3.15.7", "", { "dependencies": { "@types/ini": "^4.1.1", "debug": "^4.4.0", "flatbuffers": "^25.2.10", "h264-profile-level-id": "^2.2.0", "ini": "^5.0.0", "node-fetch": "^3.3.2", "supports-color": "^10.0.0", "tar": "^7.4.3" } }, "sha512-rtf6muWw9shaytcdvYCnQdHboCui9RDL02AVc79cSgcFina7PH/EBfVJ8BckVw3h/MW8D/wmLanOTFipEU/BzA=="],
+    "mediasoup": ["mediasoup@3.16.6", "", { "dependencies": { "@types/ini": "^4.1.1", "debug": "^4.4.1", "flatbuffers": "^25.2.10", "h264-profile-level-id": "^2.2.2", "ini": "^5.0.0", "node-fetch": "^3.3.2", "supports-color": "^10.0.0", "tar": "^7.4.3" } }, "sha512-WNdP6qv5arY9sKPshYI6fI9feIEkxIYHYp2b2suPGQKTOoHP9EHHb9XPGnDJxdAFFiq/V6VVyfVHWuaFEllj0A=="],
 
     "meshoptimizer": ["meshoptimizer@0.22.0", "", {}, "sha512-IebiK79sqIy+E4EgOr+CAw+Ke8hAspXKzBd0JdgEmPHiAwmvEj2S4h1rfvo+o/BnfEYd/jAOg5IeeIjzlzSnDg=="],
 
@@ -515,6 +519,8 @@
     "colorspace/color": ["color@3.2.1", "", { "dependencies": { "color-convert": "^1.9.3", "color-string": "^1.6.0" } }, "sha512-aBl7dZI9ENN6fUGC7mWpMTPNHmWUSNan9tuWN6ahh5ZLNk9baLJOnSMlrQkHcrfFgz2/RigjUVAjdx36VcemKA=="],
 
     "glob/minimatch": ["minimatch@9.0.5", "", { "dependencies": { "brace-expansion": "^2.0.1" } }, "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow=="],
+
+    "hytopia/mediasoup": ["mediasoup@3.15.7", "", { "dependencies": { "@types/ini": "^4.1.1", "debug": "^4.4.0", "flatbuffers": "^25.2.10", "h264-profile-level-id": "^2.2.0", "ini": "^5.0.0", "node-fetch": "^3.3.2", "supports-color": "^10.0.0", "tar": "^7.4.3" } }, "sha512-rtf6muWw9shaytcdvYCnQdHboCui9RDL02AVc79cSgcFina7PH/EBfVJ8BckVw3h/MW8D/wmLanOTFipEU/BzA=="],
 
     "lazystream/readable-stream": ["readable-stream@2.3.8", "", { "dependencies": { "core-util-is": "~1.0.0", "inherits": "~2.0.3", "isarray": "~1.0.0", "process-nextick-args": "~2.0.0", "safe-buffer": "~5.1.1", "string_decoder": "~1.1.1", "util-deprecate": "~1.0.1" } }, "sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA=="],
 

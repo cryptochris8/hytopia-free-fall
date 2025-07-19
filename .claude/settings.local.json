@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(bun run:*)",
-      "Bash(timeout 10 bun run:*)"
+      "Bash(timeout 10 bun run:*)",
+      "Bash(bun remove:*)",
+      "Bash(bun add:*)",
+      "Bash(bun:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
