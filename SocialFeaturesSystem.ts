@@ -687,15 +687,18 @@ export default class SocialFeaturesSystem {
 
     // Check if player has persisted data methods (may not be available in local dev)
     if (player.getPersistedData && typeof player.getPersistedData === 'function') {
-      player.getPersistedData().then(data => {
-        const updatedData = {
-          ...data,
-          socialProfile: storableProfile
-        };
-        player.setPersistedData(updatedData);
-      }).catch(error => {
-        console.error('[SocialFeaturesSystem] Failed to save player profile:', error);
-      });
+      const persistedDataPromise = player.getPersistedData();
+      if (persistedDataPromise && typeof persistedDataPromise.then === 'function') {
+        persistedDataPromise.then(data => {
+          const updatedData = {
+            ...data,
+            socialProfile: storableProfile
+          };
+          player.setPersistedData(updatedData);
+        }).catch(error => {
+          console.error('[SocialFeaturesSystem] Failed to save player profile:', error);
+        });
+      }
     } else {
       console.warn('[SocialFeaturesSystem] Player persistence not available in current environment');
     }

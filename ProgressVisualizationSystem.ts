@@ -466,7 +466,11 @@ export class ProgressVisualizationSystem {
     try {
       // Update texture based on current data
       const newTexture = this._getElementTexture(element.type, element.data);
-      element.entity.setBlockTextureUri(newTexture);
+      if (element.entity.setBlockTextureUri && typeof element.entity.setBlockTextureUri === 'function') {
+        element.entity.setBlockTextureUri(newTexture);
+      } else {
+        console.warn('[ProgressVisualizationSystem] setBlockTextureUri method not available on entity');
+      }
 
       // Add animation if needed
       if (this._shouldAnimate(element)) {
