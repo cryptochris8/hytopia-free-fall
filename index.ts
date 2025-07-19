@@ -32,6 +32,12 @@ import { AchievementSystem } from './AchievementSystem';
 import { AdaptiveDifficultySystem } from './AdaptiveDifficultySystem';
 import { ProgressVisualizationSystem } from './ProgressVisualizationSystem';
 
+// Import Phase 3 systems
+import CompetitiveRaceManager from './CompetitiveRaceManager';
+import TeamChallengeManager from './TeamChallengeManager';
+import GlobalLeaderboardSystem from './GlobalLeaderboardSystem';
+import SocialFeaturesSystem from './SocialFeaturesSystem';
+
 declare module 'hytopia' {
   interface EventPayloads {
     'correctAnswer': { player: Player };
@@ -904,6 +910,11 @@ class MathGameManager {
       AchievementSystem.getInstance().initializePlayerProgress(player.id);
       AdaptiveDifficultySystem.getInstance().initializePlayerParameters(player.id);
       ProgressVisualizationSystem.getInstance().initializePlayerVisualization(player.id);
+      
+      // Initialize Phase 3 systems for player
+      console.log(`[MathGameManager] Initializing Phase 3 systems for ${player.username}`);
+      GlobalLeaderboardSystem.instance.loadPlayerStats(player);
+      SocialFeaturesSystem.instance.loadPlayerProfile(player);
       console.log(`[MathGameManager] Initialized Phase 2 systems for ${player.username}`);
 
       // Load the UI file for the player
@@ -1057,6 +1068,10 @@ class MathGameManager {
       ProgressVisualizationSystem.getInstance().cleanupPlayerVisualization(player.id);
       console.log(`[MathGameManager] Cleaned up Phase 2 systems for ${player.username}.`);
       
+      // Clean up Phase 3 systems
+      SocialFeaturesSystem.instance.onPlayerDisconnect(player);
+      console.log(`[MathGameManager] Cleaned up Phase 3 systems for ${player.username}.`);
+      
       // Clean up score visualizations
       ScoreVisualizationSystem.getInstance().cleanup();
       
@@ -1135,6 +1150,16 @@ class MathGameManager {
           const notifications = AchievementSystem.getInstance().getPendingNotifications(player.id);
           notifications.forEach(notification => {
             ProgressVisualizationSystem.getInstance().showAchievementNotification(playerEntity, notification);
+          });
+          
+          // Phase 3: Update multiplayer systems for correct answers
+          CompetitiveRaceManager.instance.handleAnswerSubmit(player, true);
+          TeamChallengeManager.instance.handleTeamAnswer(player, true, 100); // 100 time bonus
+          GlobalLeaderboardSystem.instance.updatePlayerGameStats(player, {
+            questionsAnswered: 1,
+            correctAnswers: 1,
+            score: scoreMultiplier,
+            streak: playerState.questionsPresented
           });
         }
 
@@ -1306,6 +1331,15 @@ class MathGameManager {
             false, 
             2000
           );
+          
+          // Phase 3: Update multiplayer systems for wrong answers
+          CompetitiveRaceManager.instance.handleAnswerSubmit(player, false);
+          TeamChallengeManager.instance.handleTeamAnswer(player, false, 0); // No time bonus
+          GlobalLeaderboardSystem.instance.updatePlayerGameStats(player, {
+            questionsAnswered: 1,
+            correctAnswers: 0,
+            score: 0
+          });
         }
 
         // --- NEW: Reset Gravity ---
@@ -2129,6 +2163,23 @@ function initializeGameSystems(world: World): void {
     volume: AUDIO_MUSIC_VOLUME 
   });
   console.log('[Server] Background music object created.');
+
+  // Initialize Phase 3 systems
+  console.log('[Server] Initializing Phase 3: Multiplayer & Social Features...');
+  
+  // Initialize global leaderboard system
+  GlobalLeaderboardSystem.instance.initialize(world);
+  
+  // Initialize competitive race manager
+  CompetitiveRaceManager.instance.initialize(world);
+  
+  // Initialize team challenge manager
+  TeamChallengeManager.instance.initialize(world);
+  
+  // Initialize social features system
+  SocialFeaturesSystem.instance.initialize(world);
+  
+  console.log('[Server] Phase 3 systems initialized successfully.');
 
   // Pass the music object to the game manager
   // This implicitly sets up player join/leave listeners and UI interaction

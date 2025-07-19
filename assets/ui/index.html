@@ -27,6 +27,10 @@ and also configure additional buttons for mobile compatibility.
       <div id="moderate-button" class="button">Moderate</div>
       <div id="hard-button" class="button">Hard</div>
   </div>
+  <!-- Multiplayer Button -->
+  <div class="multiplayer-access">
+    <div id="multiplayer-button" class="button">Multiplayer</div>
+  </div>
   <!-- <div id="start-button" class="button">Start Game</div> --> <!-- Original button commented out -->
 </div>
 
@@ -53,6 +57,128 @@ and also configure additional buttons for mobile compatibility.
     Final Score: <span id="final-score">0</span>
   </div>
   <div id="play-again-button" class="button">Play Again</div>
+</div>
+
+<!-- Phase 3: Multiplayer Menu -->
+<div id="multiplayer-menu" class="screen">
+  <h1>Multiplayer</h1>
+  <div class="multiplayer-buttons">
+    <div id="race-mode-button" class="button">Competitive Race</div>
+    <div id="team-mode-button" class="button">Team Challenge</div>
+    <div id="leaderboard-button" class="button">Leaderboards</div>
+    <div id="friends-button" class="button">Friends</div>
+    <div id="back-to-main-button" class="button">Back to Main</div>
+  </div>
+</div>
+
+<!-- Phase 3: Race Lobby -->
+<div id="race-lobby" class="screen">
+  <h1>Race Lobby</h1>
+  <div id="race-lobby-content">
+    <div id="race-info">
+      <p>Session ID: <span id="race-session-id">-</span></p>
+      <p>Players: <span id="race-player-count">0</span></p>
+    </div>
+    <div id="race-players-list">
+      <!-- Players will be added dynamically -->
+    </div>
+    <div class="race-buttons">
+      <div id="start-race-button" class="button disabled">Start Race</div>
+      <div id="leave-race-button" class="button">Leave Race</div>
+    </div>
+  </div>
+</div>
+
+<!-- Phase 3: Team Lobby -->
+<div id="team-lobby" class="screen">
+  <h1>Team Challenge</h1>
+  <div id="team-lobby-content">
+    <div id="team-selection">
+      <div class="team red" id="red-team">
+        <h3>Red Team</h3>
+        <div class="team-members"></div>
+        <div class="join-team-button" data-team="red">Join</div>
+      </div>
+      <div class="team blue" id="blue-team">
+        <h3>Blue Team</h3>
+        <div class="team-members"></div>
+        <div class="join-team-button" data-team="blue">Join</div>
+      </div>
+    </div>
+    <div class="team-buttons">
+      <div id="start-team-challenge-button" class="button disabled">Start Challenge</div>
+      <div id="leave-team-button" class="button">Leave Team</div>
+    </div>
+  </div>
+</div>
+
+<!-- Phase 3: Leaderboards -->
+<div id="leaderboards-screen" class="screen">
+  <h1>Leaderboards</h1>
+  <div class="leaderboard-tabs">
+    <div class="tab active" data-type="all_time_score">All Time</div>
+    <div class="tab" data-type="daily_score">Daily</div>
+    <div class="tab" data-type="weekly_score">Weekly</div>
+    <div class="tab" data-type="race_wins">Race Wins</div>
+  </div>
+  <div id="leaderboard-content">
+    <div class="leaderboard-header">
+      <span>Rank</span>
+      <span>Player</span>
+      <span>Score</span>
+    </div>
+    <div id="leaderboard-entries">
+      <!-- Entries will be added dynamically -->
+    </div>
+  </div>
+  <div id="player-rank-info">
+    Your Rank: <span id="player-rank">-</span>
+  </div>
+  <div id="back-from-leaderboard-button" class="button">Back</div>
+</div>
+
+<!-- Phase 3: Social/Friends Screen -->
+<div id="friends-screen" class="screen">
+  <h1>Friends</h1>
+  <div class="friends-tabs">
+    <div class="tab active" data-type="friends">Friends</div>
+    <div class="tab" data-type="requests">Requests</div>
+    <div class="tab" data-type="profile">Profile</div>
+  </div>
+  <div id="friends-content">
+    <div id="friends-list">
+      <!-- Friends will be added dynamically -->
+    </div>
+    <div id="friend-requests">
+      <!-- Friend requests will be added dynamically -->
+    </div>
+    <div id="player-profile">
+      <!-- Profile content -->
+    </div>
+  </div>
+  <div id="back-from-friends-button" class="button">Back</div>
+</div>
+
+<!-- Phase 3: Race Progress HUD -->
+<div id="race-progress-hud" class="race-hud">
+  <div class="race-timer">Time: <span id="race-timer">0:00</span></div>
+  <div class="race-progress-bars">
+    <!-- Progress bars for each player will be added dynamically -->
+  </div>
+</div>
+
+<!-- Phase 3: Team Progress HUD -->
+<div id="team-progress-hud" class="team-hud">
+  <div class="team-stats">
+    <div class="team-info">
+      <span id="team-name">Team</span>
+      <span id="team-score">Score: 0</span>
+      <span id="team-lives">Lives: 5</span>
+    </div>
+  </div>
+  <div class="team-members-progress">
+    <!-- Team member progress will be added dynamically -->
+  </div>
 </div>
 
 <!-- Mobile Controls - Updated with directional pad -->
@@ -502,6 +628,260 @@ and also configure additional buttons for mobile compatibility.
     .final-score-container {
       font-size: 20px;
     }
+  }
+
+  /* Phase 3: Multiplayer UI Styles */
+  .multiplayer-access {
+    margin-top: 20px;
+  }
+
+  #multiplayer-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  #multiplayer-button:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  }
+
+  .multiplayer-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    margin-top: 30px;
+  }
+
+  /* Race/Team Lobby Styles */
+  #race-lobby, #team-lobby {
+    padding: 20px;
+  }
+
+  #race-info, #team-info {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+
+  #race-players-list {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    min-height: 150px;
+  }
+
+  .race-buttons, .team-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+  }
+
+  /* Team Selection Styles */
+  #team-selection {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .team {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    min-width: 200px;
+    text-align: center;
+  }
+
+  .team.red {
+    border: 3px solid #ff4444;
+  }
+
+  .team.blue {
+    border: 3px solid #4444ff;
+  }
+
+  .team h3 {
+    margin-bottom: 15px;
+    color: white;
+  }
+
+  .team-members {
+    min-height: 100px;
+    margin-bottom: 15px;
+  }
+
+  .join-team-button {
+    background: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .join-team-button:hover {
+    background: #45a049;
+  }
+
+  /* Leaderboard Styles */
+  .leaderboard-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .tab {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .tab.active {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
+  #leaderboard-content {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .leaderboard-header {
+    display: grid;
+    grid-template-columns: 60px 1fr 100px;
+    gap: 10px;
+    font-weight: bold;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+  }
+
+  .leaderboard-entry {
+    display: grid;
+    grid-template-columns: 60px 1fr 100px;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Friends Screen Styles */
+  .friends-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  #friends-list, #friend-requests {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 200px;
+  }
+
+  .friend-item, .request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .friend-status {
+    color: #4CAF50;
+  }
+
+  .friend-status.offline {
+    color: #ff4444;
+  }
+
+  /* Race/Team HUD Styles */
+  .race-hud, .team-hud {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+    color: white;
+    min-width: 250px;
+  }
+
+  .race-timer {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .race-progress-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .race-progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .progress-name {
+    width: 100px;
+    font-size: 12px;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+  }
+
+  .team-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .team-members-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  /* Button States */
+  .button.disabled {
+    background: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .button.disabled:hover {
+    background: #666;
+    transform: none;
+  }
+
+  /* Hide multiplayer HUDs by default */
+  .race-hud, .team-hud {
+    display: none;
+  }
+
+  .race-hud.active, .team-hud.active {
+    display: block;
   }
 </style>
 

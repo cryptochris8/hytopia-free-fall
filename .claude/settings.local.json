@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(bun run:*)",
-      "Bash(timeout 10 bun run:*)"
+      "Bash(timeout 10 bun run:*)",
+      "Bash(git push:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
