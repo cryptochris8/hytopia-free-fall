@@ -416,6 +416,8 @@ class AnswerBlocksManager {
   // Previous generateAnswerBlocks becomes internal, called by generateForPlayer maybe?
   // Let's keep it simple: generateAnswerBlocks is global for now, but collision checks player state.
   public generateAnswerBlocks(correctAnswer: number, wrongAnswers: number[]): void {
+    console.log(`[AnswerBlocksManager] generateAnswerBlocks called with correct: ${correctAnswer}, wrong: [${wrongAnswers.join(', ')}]`);
+    
     // Clear existing blocks *before* generating new ones
     this.clearAnswerBlocks(); // Use the new clear method
 
@@ -434,7 +436,10 @@ class AnswerBlocksManager {
 
     // Create blocks (mostly same as before)
     answers.forEach((answerValue, index) => { // Renamed 'answer' to 'answerValue' to avoid conflict
-      const texturePath = `${ANSWER_BLOCK_TEXTURE_PATH}${answerValue}.png`;
+      // Use modulo for texture selection when answer exceeds available textures (0-15)
+      const textureNumber = answerValue > 15 ? answerValue % 16 : answerValue;
+      const texturePath = `${ANSWER_BLOCK_TEXTURE_PATH}${textureNumber}.png`;
+      console.log(`[AnswerBlocksManager] Using texture ${textureNumber} for answer value ${answerValue}`);
       const blockPosition = positions[index]; // Store position for spawning effect
       console.log(`[AnswerBlocksManager] Creating block ${index}: value=${answerValue}, position=${JSON.stringify(blockPosition)}`);
       
@@ -1198,8 +1203,10 @@ class MathGameManager {
 
         // Play sound
         try {
+            console.log(`[MathGameManager] Attempting to play correct sound ${AUDIO_SFX_CORRECT} for ${player.username}`);
             const correctSfx = new Audio({ uri: AUDIO_SFX_CORRECT, loop: false, volume: AUDIO_SFX_VOLUME, attachedToEntity: playerEntity, referenceDistance: AUDIO_SFX_REFERENCE_DISTANCE });
             correctSfx.play(this._world);
+            console.log(`[MathGameManager] Successfully played correct sound for ${player.username}`);
         } catch (error) {
             console.error(`[MathGameManager] Error playing ${AUDIO_SFX_CORRECT} for ${player.username}:`, error);
         }
@@ -1365,8 +1372,10 @@ class MathGameManager {
 
         // Play sound
         try {
+            console.log(`[MathGameManager] Attempting to play wrong sound ${AUDIO_SFX_WRONG} for ${player.username}`);
             const wrongSfx = new Audio({ uri: AUDIO_SFX_WRONG, loop: false, volume: AUDIO_SFX_VOLUME, attachedToEntity: playerEntity, referenceDistance: AUDIO_SFX_REFERENCE_DISTANCE });
             wrongSfx.play(this._world);
+            console.log(`[MathGameManager] Successfully played wrong sound for ${player.username}`);
         } catch (error) {
             console.error(`[MathGameManager] Error playing ${AUDIO_SFX_WRONG} for ${player.username}:`, error);
         }
@@ -1559,8 +1568,11 @@ class MathGameManager {
         return; // Don't generate if game isn't active for this player
      }
      
+     console.log(`[MathGameManager] Generating new problem for ${player.username}, question #${playerState.questionsPresented + 1}, difficulty: ${playerState.difficulty}`);
+     
      // Check if we should use adaptive curriculum questions
      const adaptiveQuestions = AdaptiveDifficultySystem.getInstance().getAdaptiveQuestions(player.id, 1);
+     console.log(`[MathGameManager] Adaptive system returned ${adaptiveQuestions.length} questions for ${player.username}`);
      if (adaptiveQuestions.length > 0) {
        const question = adaptiveQuestions[0];
        console.log(`[MathGameManager] Using adaptive curriculum question for ${player.username}: ${question.question}`);
@@ -1642,11 +1654,11 @@ class MathGameManager {
          allowedOps = ['+', '-', '*'];
          problemMaxValue = 10;
          wrongAnswerRange = 5;
-         wrongAnswerMax = 10;
+         wrongAnswerMax = 100; // Increased to handle multiplication results
          break;
        case 'hard':
        default:
-         allowedOps = ['.', '-', '*', '/']; // Use original full list
+         allowedOps = ['+', '-', '*', '/']; // Use original full list
          problemMaxValue = 15; // Use a general max for non-division hard
          wrongAnswerRange = WRONG_ANSWER_RANGE; // Original: 10
          wrongAnswerMax = WRONG_ANSWER_MAX_VALUE; // Original: 15
@@ -1744,6 +1756,7 @@ class MathGameManager {
 
   // Modified to accept difficulty-based range and max value
   private _generateWrongAnswers(correctAnswer: number, count: number = WRONG_ANSWER_COUNT, range: number = WRONG_ANSWER_RANGE, maxVal: number = WRONG_ANSWER_MAX_VALUE): number[] {
+    console.log(`[MathGameManager] _generateWrongAnswers called: correctAnswer=${correctAnswer}, count=${count}, range=${range}, maxVal=${maxVal}`);
     const wrongAnswers = new Set<number>();
     let attempts = 0; // Attempt counter to prevent infinite loops
 
@@ -1755,7 +1768,7 @@ class MathGameManager {
         while (wrong === correctAnswer) {
             // Try generating a number within a difficulty-based range around the answer
             const minRange = Math.max(WRONG_ANSWER_MIN_VALUE, correctAnswer - range);
-            const maxRange = correctAnswer + range;
+            const maxRange = Math.min(correctAnswer + range, maxVal); // Cap maxRange at maxVal
             wrong = Math.floor(Math.random() * (maxRange - minRange + 1)) + minRange;
         }
 
