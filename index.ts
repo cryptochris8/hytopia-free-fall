@@ -164,13 +164,13 @@ const TUNNEL_DECOR_HALF_EXTENTS: Vector3Like = { x: 0.25, y: 0.25, z: 0.25 };
 const TUNNEL_DECOR_ANGULAR_VELOCITY: Vector3Like = { x: 1, y: 1, z: 0 };
 
 // Cloud System Settings
-const CLOUD_COUNT = 50;
+const CLOUD_COUNT = 15;
 const CLOUD_CENTER: Vector3Like = { x: 0, y: 0, z: 0 };
 const CLOUD_RADIUS_MIN = 50;
 const CLOUD_RADIUS_MAX = 100;
 const CLOUD_HEIGHT_MIN = -100;
 const CLOUD_HEIGHT_MAX = 220;
-const CLOUD_BLOCKS_PER_FORMATION = 15;
+const CLOUD_BLOCKS_PER_FORMATION = 8;
 const CLOUD_BLOCK_TEXTURE = 'blocks/snow.png';
 const CLOUD_BLOCK_HALF_EXTENTS: Vector3Like = { x: 0.5, y: 0.5, z: 0.5 };
 const CLOUD_BLOCK_SPREAD_XZ = 5;
@@ -1522,11 +1522,31 @@ class MathGameManager {
        // Generate answer blocks
        this._answerBlocksManager.generateAnswerBlocks(question.correctAnswer, question.wrongAnswers);
        
-       // Update UI with the question
+       // Parse the question to extract numbers and operation for UI display
+       const questionParts = question.question.split(' ');
+       let num1 = '?', operation = '?', num2 = '?';
+       
+       if (questionParts.length >= 3) {
+         // Handle word problems differently
+         if (question.question.length > 20) {
+           // For word problems, display the full question text in a simplified way
+           num1 = 'Word';
+           operation = '?';
+           num2 = 'Problem';
+         } else {
+           // For regular math problems like "25 × 16 = ?"
+           num1 = questionParts[0];
+           operation = questionParts[1];
+           num2 = questionParts[2];
+         }
+       }
+       
+       // Update UI with the parsed question
        player.ui.sendData({
          type: 'problem',
-         question: question.question,
-         operation: '=' // For display purposes
+         num1: num1,
+         operation: operation,
+         num2: num2
        });
        
        // Record session activity
@@ -1900,8 +1920,8 @@ class NumberTunnelSystem {
   public createTunnel(
     radius: number = TUNNEL_RADIUS,
     height: number = TUNNEL_HEIGHT,
-    segments: number = 75, // Reduced from TUNNEL_SEGMENTS (150)
-    blocksPerRing: number = TUNNEL_BLOCKS_PER_RING // Use the updated constant
+    segments: number = 30, // Further reduced for memory
+    blocksPerRing: number = 12 // Reduced for memory
   ): void {
     console.log(`[NumberTunnelSystem] Creating tunnel with ${segments * blocksPerRing} numbered blocks...`);
     const segmentHeight = height / segments;
@@ -2131,8 +2151,8 @@ function initializeGameSystems(world: World): void {
   numberTunnelSystem.createTunnel(
       TUNNEL_RADIUS,
       TUNNEL_HEIGHT,
-      75, // Reduced from TUNNEL_SEGMENTS (150)
-      16  // Reduced from TUNNEL_BLOCKS_PER_RING (24)
+      30, // Reduced for memory optimization
+      12  // Reduced for memory optimization
   );
 }
 

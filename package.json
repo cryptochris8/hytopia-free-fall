@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "bun run index.ts",
-    "mobile": "bun run mobile.ts"
+    "start": "bun --smol run index.ts",
+    "mobile": "bun --smol run mobile.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
