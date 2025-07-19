@@ -657,12 +657,17 @@ export default class SocialFeaturesSystem {
   private getOnlinePlayer(playerId: string): Player | undefined {
     if (!this._world || !this._onlinePlayers.has(playerId)) return undefined;
 
-    // Find player entity
-    const playerEntity = this._world.entityManager
-      .getAllPlayerEntities()
-      .find(e => e.player?.id === playerId);
+    // Find player from global map by iterating through entries
+    const playerEntityMap = (global as any).playerEntityMap;
+    if (!playerEntityMap) return undefined;
 
-    return playerEntity?.player;
+    for (const [username, playerData] of playerEntityMap.entries()) {
+      if (playerData?.entity?.player?.id === playerId) {
+        return playerData.entity.player;
+      }
+    }
+
+    return undefined;
   }
 
   private savePlayerProfile(player: Player, profile: PlayerProfile): void {

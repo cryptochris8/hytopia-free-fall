@@ -1,4 +1,4 @@
-import { PlayerEntity, World, Entity, Vector3Like, RigidBodyType } from 'hytopia';
+import { PlayerEntity, World, Entity, Vector3Like, RigidBodyType, ColliderShape } from 'hytopia';
 import { MathTopic } from './CurriculumSystem';
 
 /**
@@ -183,9 +183,17 @@ export class AchievementSystem {
    * Initialize the achievement system
    */
   public initialize(world: World): void {
-    this._world = world;
-    this._startAchievementChecks();
-    console.log('[AchievementSystem] Initialized achievement system');
+    try {
+      if (!world) {
+        throw new Error('World instance is required');
+      }
+      this._world = world;
+      this._startAchievementChecks();
+      console.log('[AchievementSystem] Initialized achievement system');
+    } catch (error) {
+      console.error('[AchievementSystem] Failed to initialize:', error);
+      throw error; // Re-throw to let caller handle critical failure
+    }
   }
 
   /**
@@ -784,7 +792,7 @@ export class AchievementSystem {
           type: RigidBodyType.DYNAMIC,
           gravityScale: -0.5,
           colliders: [{
-            shape: 1,
+            shape: ColliderShape.CUBOID,
             halfExtents: { x: 0.3, y: 0.3, z: 0.3 },
             isSensor: true
           }]

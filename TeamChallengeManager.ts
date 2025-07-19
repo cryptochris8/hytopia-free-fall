@@ -127,12 +127,13 @@ export default class TeamChallengeManager {
     // Remove from any existing team
     this.removePlayerFromChallenge(player);
 
-    // Get player entity
-    const playerEntity = this._world?.entityManager
-      .getAllPlayerEntities()
-      .find(e => e.player?.id === player.id);
-
-    if (!playerEntity) return false;
+    // Get player entity from global map
+    const playerData = (global as any).playerEntityMap?.get(player.username);
+    if (!playerData?.entity) {
+      console.warn(`[TeamChallengeManager] Could not find player entity for ${player.username}`);
+      return false;
+    }
+    const playerEntity = playerData.entity;
 
     const member: TeamMember = {
       player,

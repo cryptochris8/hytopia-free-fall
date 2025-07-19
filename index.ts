@@ -38,11 +38,18 @@ import TeamChallengeManager from './TeamChallengeManager';
 import GlobalLeaderboardSystem from './GlobalLeaderboardSystem';
 import SocialFeaturesSystem from './SocialFeaturesSystem';
 
+// Import Phase 4 systems
+import { AdvancedMobileControls } from './AdvancedMobileControls';
+import { PerformanceMonitor } from './PerformanceMonitor';
+import { AccessibilityFeatures, AudioCueType } from './AccessibilityFeatures';
+
 declare module 'hytopia' {
   interface EventPayloads {
     'correctAnswer': { player: Player };
     'wrongAnswer': { player: Player };
     'playerLanded': { player: Player };
+    'doubleTapAction': { player: Player };
+    'newMathProblem': { num1: number; operator: string; num2: number };
     // Add game end event if needed for server-side logic (optional here)
     // 'gameEnd': { player: Player, finalScore: number }; 
   }
@@ -233,6 +240,9 @@ class FallingPlayerController extends BaseEntityController {
     cameraOrientation: PlayerCameraOrientation,
     deltaTimeMs: number
   ): void {
+    // Track performance for Phase 4 monitoring
+    PerformanceMonitor.instance.trackPerformance(deltaTimeMs);
+    
     // Lock camera orientation to look straight down (90 degrees)
     cameraOrientation.pitch = -Math.PI / 2; // 90 degrees down
     cameraOrientation.yaw = 0;
@@ -1587,6 +1597,20 @@ class MathGameManager {
          operation: operation,
          num2: num2
        });
+
+       // Emit newMathProblem event for Phase 4 accessibility features (if not a word problem)
+       if (num1 !== 'Word' && operation !== '?' && num2 !== 'Problem') {
+         try {
+           const n1 = parseInt(num1);
+           const n2 = parseInt(num2);
+           if (!isNaN(n1) && !isNaN(n2)) {
+             this._world.emit('newMathProblem', { num1: n1, operator: operation, num2: n2 });
+           }
+         } catch (e) {
+           // For complex questions, just emit a generic notification
+           this._world.emit('newMathProblem', { num1: 0, operator: '?', num2: 0 });
+         }
+       }
        
        // Record session activity
        AchievementSystem.getInstance().recordAction(player.id, 'question_answered');
@@ -1709,6 +1733,9 @@ class MathGameManager {
       num2,
       operation // Send the operation symbol
     });
+
+    // Emit newMathProblem event for Phase 4 accessibility features
+    this._world.emit('newMathProblem', { num1, operator: operation, num2 });
 
     // Log for debugging
     console.log(`[MathGameManager] Generated new problem for ${player.username} (Difficulty: ${difficulty}): ${num1} ${operation} ${num2} = ${answer}. Wrong answers range/max: ${wrongAnswerRange}/${wrongAnswerMax}`);
@@ -2186,6 +2213,20 @@ function initializeGameSystems(world: World): void {
   SocialFeaturesSystem.instance.initialize(world);
   
   console.log('[Server] Phase 3 systems initialized successfully.');
+
+  // Initialize Phase 4 systems
+  console.log('[Server] Initializing Phase 4: Platform Optimization...');
+  
+  // Initialize performance monitoring system
+  PerformanceMonitor.instance.initialize(world);
+  
+  // Initialize advanced mobile controls
+  AdvancedMobileControls.instance.initialize(world);
+  
+  // Initialize accessibility features
+  AccessibilityFeatures.instance.initialize(world);
+  
+  console.log('[Server] Phase 4 systems initialized successfully.');
 
   // Pass the music object to the game manager
   // This implicitly sets up player join/leave listeners and UI interaction

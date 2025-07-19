@@ -46,7 +46,16 @@ export default class CompetitiveRaceManager {
   private constructor() {}
 
   public initialize(world: World): void {
-    this._world = world;
+    try {
+      if (!world) {
+        throw new Error('World instance is required for CompetitiveRaceManager');
+      }
+      this._world = world;
+      console.log('[CompetitiveRaceManager] Initialized successfully');
+    } catch (error) {
+      console.error('[CompetitiveRaceManager] Failed to initialize:', error);
+      throw error;
+    }
   }
 
   public createRaceSession(host: Player): string {
@@ -84,12 +93,13 @@ export default class CompetitiveRaceManager {
       this.removeParticipant(existingSessionId, player);
     }
 
-    // Get player entity (assuming it exists)
-    const playerEntity = this._world?.entityManager
-      .getAllPlayerEntities()
-      .find(e => e.player?.id === player.id);
-
-    if (!playerEntity) return false;
+    // Get player entity from global map
+    const playerData = (global as any).playerEntityMap?.get(player.username);
+    if (!playerData?.entity) {
+      console.warn(`[CompetitiveRaceManager] Could not find player entity for ${player.username}`);
+      return false;
+    }
+    const playerEntity = playerData.entity;
 
     const participant: RaceParticipant = {
       player,

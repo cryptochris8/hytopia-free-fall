@@ -1,4 +1,4 @@
-import { Entity, Vector3, RigidBodyType, World, Vector3Like, EntityOptions, ColliderShape } from 'hytopia';
+import { Entity, Vector3, RigidBodyType, World, Vector3Like, EntityOptions, ColliderShape, CollisionGroup } from 'hytopia';
 import { FragmentTextureManager } from './FragmentTextureManager';
 
 /**
@@ -99,11 +99,16 @@ export class FragmentPool {
     // If pool is empty, create a new one
     if (!fragment) {
       console.warn('[FragmentPool] Pool exhausted, creating new fragment');
-      fragment = new Entity({
-        ...this._fragmentOptions,
-        blockTextureUri: textureUri
-      });
-      fragment.spawn(this._world, position);
+      try {
+        fragment = new Entity({
+          ...this._fragmentOptions,
+          blockTextureUri: textureUri
+        });
+        fragment.spawn(this._world, position);
+      } catch (error) {
+        console.error('[FragmentPool] Failed to create/spawn fragment:', error);
+        return; // Exit early if creation fails
+      }
     }
 
     // Configure the fragment
@@ -118,8 +123,8 @@ export class FragmentPool {
       
       // Re-enable collisions
       fragment.setCollisionGroupsForSolidColliders({
-        belongsTo: [1], // Default collision group
-        collidesWith: [1, 2] // Collide with blocks and entities
+        belongsTo: [CollisionGroup.ENTITY],
+        collidesWith: [CollisionGroup.BLOCK, CollisionGroup.ENTITY]
       });
 
       // Set up auto-return timer
@@ -161,7 +166,7 @@ export class FragmentPool {
       // Move to a far-away position
       fragment.setPosition({ x: 0, y: -1000, z: 0 });
       
-      // Disable collisions
+      // Disable collisions (empty arrays are acceptable for pooled entities)
       fragment.setCollisionGroupsForSolidColliders({
         belongsTo: [],
         collidesWith: []
