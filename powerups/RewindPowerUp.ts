@@ -9,10 +9,10 @@ export class RewindPowerUp extends PowerUpEntity {
     const options: PowerUpOptions = {
       name: 'Rewind',
       duration: -1, // No duration - used on demand
-      textureUri: 'assets/blocks/emerald-block.png', // Using emerald for special ability
-      pickupSoundUri: 'assets/audio/sfx/power-up.wav',
-      activateSoundUri: 'assets/audio/sfx/correct.mp3',
-      deactivateSoundUri: 'assets/audio/sfx/ui/notification-1.mp3',
+      textureUri: 'blocks/emerald-block.png', // Using emerald for special ability
+      pickupSoundUri: 'audio/sfx/power-up.wav',
+      activateSoundUri: 'audio/sfx/correct.mp3',
+      deactivateSoundUri: 'audio/sfx/ui/notification-1.mp3',
       description: 'Undo your last wrong answer once',
       color: { r: 80, g: 255, b: 80 } // Green color
     };

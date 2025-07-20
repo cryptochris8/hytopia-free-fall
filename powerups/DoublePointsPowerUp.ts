@@ -10,10 +10,10 @@ export class DoublePointsPowerUp extends PowerUpEntity {
     const options: PowerUpOptions = {
       name: 'Double Points',
       duration: DOUBLE_POINTS_DURATION,
-      textureUri: 'assets/blocks/gold-ore.png', // Using gold for value/points
-      pickupSoundUri: 'assets/audio/sfx/power-up.wav',
-      activateSoundUri: 'assets/audio/sfx/correct.mp3',
-      deactivateSoundUri: 'assets/audio/sfx/ui/notification-1.mp3',
+      textureUri: 'blocks/gold-ore.png', // Using gold for value/points
+      pickupSoundUri: 'audio/sfx/power-up.wav',
+      activateSoundUri: 'audio/sfx/correct.mp3',
+      deactivateSoundUri: 'audio/sfx/ui/notification-1.mp3',
       description: 'Doubles your score for correct answers',
       color: { r: 255, g: 215, b: 0 } // Gold color
     };

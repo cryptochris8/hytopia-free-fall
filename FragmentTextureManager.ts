@@ -7,61 +7,61 @@ export class FragmentTextureManager {
   // Texture variations for different block types
   private readonly _textureVariations: Record<string, string[]> = {
     // Stone-like blocks
-    'assets/blocks/stone.png': [
-      'assets/blocks/stone.png',
-      'assets/blocks/cobblestone.png',
-      'assets/blocks/gravel.png',
-      'assets/blocks/Free-fall/0.png',
-      'assets/blocks/Free-fall/1.png'
+    'blocks/stone.png': [
+      'blocks/stone.png',
+      'blocks/cobblestone.png',
+      'blocks/gravel.png',
+      'blocks/Free-fall/0.png',
+      'blocks/Free-fall/1.png'
     ],
     
     // Wood-like blocks
     'blocks/oak-planks.png': [
-      'assets/blocks/oak-planks.png',
-      'assets/blocks/Free-fall/2.png',
-      'assets/blocks/Free-fall/3.png',
-      'assets/blocks/Free-fall/4.png'
+      'blocks/oak-planks.png',
+      'blocks/Free-fall/2.png',
+      'blocks/Free-fall/3.png',
+      'blocks/Free-fall/4.png'
     ],
     
     // Glass-like blocks
-    'assets/blocks/glass.png': [
-      'assets/blocks/glass.png',
-      'assets/blocks/Free-fall/5.png',
-      'assets/blocks/Free-fall/6.png',
-      'assets/blocks/Free-fall/7.png'
+    'blocks/glass.png': [
+      'blocks/glass.png',
+      'blocks/Free-fall/5.png',
+      'blocks/Free-fall/6.png',
+      'blocks/Free-fall/7.png'
     ],
     
     // Metal/Ore blocks
-    'assets/blocks/iron-ore.png': [
-      'assets/blocks/iron-ore.png',
-      'assets/blocks/Free-fall/8.png',
-      'assets/blocks/Free-fall/9.png',
-      'assets/blocks/Free-fall/10.png'
+    'blocks/iron-ore.png': [
+      'blocks/iron-ore.png',
+      'blocks/Free-fall/8.png',
+      'blocks/Free-fall/9.png',
+      'blocks/Free-fall/10.png'
     ],
     
     // Special blocks (emerald for correct answers)
-    'assets/blocks/emerald-block.png': [
-      'assets/blocks/emerald-block.png',
-      'assets/blocks/Free-fall/11.png',
-      'assets/blocks/Free-fall/12.png',
-      'assets/blocks/Free-fall/13.png'
+    'blocks/emerald-block.png': [
+      'blocks/emerald-block.png',
+      'blocks/Free-fall/11.png',
+      'blocks/Free-fall/12.png',
+      'blocks/Free-fall/13.png'
     ],
     
     // Fire blocks (for wrong answers)
-    'assets/blocks/fire/fire_01.png': [
-      'assets/blocks/fire/fire_01.png',
-      'assets/blocks/Free-fall/14.png',
-      'assets/blocks/Free-fall/15.png',
-      'assets/blocks/fire/fire2.png'
+    'blocks/fire/fire_01.png': [
+      'blocks/fire/fire_01.png',
+      'blocks/Free-fall/14.png',
+      'blocks/Free-fall/15.png',
+      'blocks/fire/fire2.png'
     ]
   };
   
   // Default fragments for blocks without specific variations
   private readonly _defaultFragments: string[] = [
-    'assets/blocks/Free-fall/0.png',
-    'assets/blocks/Free-fall/1.png',
-    'assets/blocks/Free-fall/2.png',
-    'assets/blocks/Free-fall/3.png'
+    'blocks/Free-fall/0.png',
+    'blocks/Free-fall/1.png',
+    'blocks/Free-fall/2.png',
+    'blocks/Free-fall/3.png'
   ];
 
   private constructor() {}
@@ -98,28 +98,28 @@ export class FragmentTextureManager {
   public getEffectTextures(effectType: 'sparkle' | 'dust' | 'debris' | 'magic', count: number = 4): string[] {
     const effectTextures: Record<string, string[]> = {
       sparkle: [
-        'assets/blocks/Free-fall/4.png',
-        'assets/blocks/Free-fall/5.png',
-        'assets/blocks/diamond-block.png',
-        'assets/blocks/emerald-block.png'
+        'blocks/Free-fall/4.png',
+        'blocks/Free-fall/5.png',
+        'blocks/diamond-block.png',
+        'blocks/emerald-block.png'
       ],
       dust: [
-        'assets/blocks/Free-fall/6.png',
-        'assets/blocks/Free-fall/7.png',
-        'assets/blocks/sand.png',
-        'assets/blocks/gravel.png'
+        'blocks/Free-fall/6.png',
+        'blocks/Free-fall/7.png',
+        'blocks/sand.png',
+        'blocks/gravel.png'
       ],
       debris: [
-        'assets/blocks/Free-fall/8.png',
-        'assets/blocks/Free-fall/9.png',
-        'assets/blocks/Free-fall/10.png',
-        'assets/blocks/cobblestone.png'
+        'blocks/Free-fall/8.png',
+        'blocks/Free-fall/9.png',
+        'blocks/Free-fall/10.png',
+        'blocks/cobblestone.png'
       ],
       magic: [
-        'assets/blocks/Free-fall/11.png',
-        'assets/blocks/Free-fall/12.png',
-        'assets/blocks/swirl-rune.png',
-        'assets/blocks/emerald-block.png'
+        'blocks/Free-fall/11.png',
+        'blocks/Free-fall/12.png',
+        'blocks/swirl-rune.png',
+        'blocks/emerald-block.png'
       ]
     };
     
@@ -140,10 +140,10 @@ export class FragmentTextureManager {
   public getAnswerFragmentTextures(isCorrect: boolean, count: number = 4): string[] {
     if (isCorrect) {
       // Sparkly, positive textures for correct answers
-      return this.getFragmentTextures('assets/blocks/emerald-block.png', count);
+      return this.getFragmentTextures('blocks/emerald-block.png', count);
     } else {
       // Fiery, negative textures for wrong answers
-      return this.getFragmentTextures('assets/blocks/fire/fire_01.png', count);
+      return this.getFragmentTextures('blocks/fire/fire_01.png', count);
     }
   }
 

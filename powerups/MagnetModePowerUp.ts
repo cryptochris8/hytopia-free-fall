@@ -11,10 +11,10 @@ export class MagnetModePowerUp extends PowerUpEntity {
     const options: PowerUpOptions = {
       name: 'Magnet Mode',
       duration: MAGNET_DURATION,
-      textureUri: 'assets/blocks/iron-ore.png', // Using iron for magnetic effect
-      pickupSoundUri: 'assets/audio/sfx/power-up.wav',
-      activateSoundUri: 'assets/audio/sfx/correct.mp3',
-      deactivateSoundUri: 'assets/audio/sfx/ui/notification-1.mp3',
+      textureUri: 'blocks/iron-ore.png', // Using iron for magnetic effect
+      pickupSoundUri: 'audio/sfx/power-up.wav',
+      activateSoundUri: 'audio/sfx/correct.mp3',
+      deactivateSoundUri: 'audio/sfx/ui/notification-1.mp3',
       description: 'Attracts nearby answer blocks towards you',
       color: { r: 200, g: 100, b: 255 } // Purple color
     };

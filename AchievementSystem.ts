@@ -786,7 +786,7 @@ export class AchievementSystem {
 
       // Create floating achievement icon
       const achievementEntity = new Entity({
-        blockTextureUri: 'assets/blocks/gold-ore.png',
+        blockTextureUri: 'blocks/gold-ore.png',
         blockHalfExtents: { x: 0.3, y: 0.3, z: 0.3 },
         rigidBodyOptions: {
           type: RigidBodyType.DYNAMIC,

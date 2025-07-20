@@ -112,7 +112,7 @@ const PLAYER_CAMERA_FORWARD_OFFSET = 1.0;
 const PLAYER_FACING_DOWN_ROTATION = { x: -0.7071068, y: 0, z: 0, w: 0.7071068 }; // Quaternion for -90 degrees on X-axis
 
 // Answer Block Settings
-const ANSWER_BLOCK_TEXTURE_PATH = 'assets/blocks/Free-fall/'; // Base path, number appended
+const ANSWER_BLOCK_TEXTURE_PATH = 'blocks/Free-fall/'; // Base path, number appended
 const ANSWER_BLOCK_HALF_EXTENTS: Vector3Like = { x: 0.5, y: 0.5, z: 0.5 };
 const ANSWER_BLOCK_SPACING = 3;
 const ANSWER_BLOCK_Y_POSITION = -80;
@@ -152,8 +152,8 @@ const AUDIO_MUSIC_VOLUME = 0.7;
 const UI_INDEX_PATH = 'ui/index.html';
 
 // Temporary Effect Settings
-const EFFECT_BLOCK_CORRECT_TEXTURE = 'assets/blocks/emerald-block.png';
-const EFFECT_BLOCK_WRONG_TEXTURE = 'assets/blocks/fire/fire_01.png';
+const EFFECT_BLOCK_CORRECT_TEXTURE = 'blocks/emerald-block.png';
+const EFFECT_BLOCK_WRONG_TEXTURE = 'blocks/fire/fire_01.png';
 const EFFECT_BLOCK_COUNT = 2;
 const EFFECT_BLOCK_DURATION_MS = 500;
 const EFFECT_BLOCK_HALF_EXTENTS: Vector3Like = { x: 0.15, y: 0.15, z: 0.15 };
@@ -170,9 +170,9 @@ const TUNNEL_BLOCK_HALF_EXTENTS: Vector3Like = { x: 0.5, y: 0.5, z: 0.5 };
 const TUNNEL_DECOR_LIGHTS_PER_RING = 4;
 const TUNNEL_DECOR_SEGMENT_STEP = 5; // Add decorations every 5 segments
 const TUNNEL_DECOR_RADIUS_OFFSET = 1.5; // How far inside the wall
-const TUNNEL_DECOR_TEXTURE_DIAMOND = 'assets/blocks/diamond-block.png';
-const TUNNEL_DECOR_TEXTURE_EMERALD = 'assets/blocks/emerald-block.png';
-const TUNNEL_DECOR_TEXTURE_HYTOPIA_LOGO = 'assets/ui/logos/hytopia-icon-big.png'; // Path relative to assets folder
+const TUNNEL_DECOR_TEXTURE_DIAMOND = 'blocks/diamond-block.png';
+const TUNNEL_DECOR_TEXTURE_EMERALD = 'blocks/emerald-block.png';
+const TUNNEL_DECOR_TEXTURE_HYTOPIA_LOGO = 'ui/logos/hytopia-icon-big.png'; // Path relative to assets folder
 const TUNNEL_DECOR_HALF_EXTENTS: Vector3Like = { x: 0.25, y: 0.25, z: 0.25 };
 const TUNNEL_DECOR_ANGULAR_VELOCITY: Vector3Like = { x: 1, y: 1, z: 0 };
 
@@ -184,7 +184,7 @@ const CLOUD_RADIUS_MAX = 100;
 const CLOUD_HEIGHT_MIN = -100;
 const CLOUD_HEIGHT_MAX = 220;
 const CLOUD_BLOCKS_PER_FORMATION = 10; // Slightly increased for better visual density
-const CLOUD_BLOCK_TEXTURE = 'assets/blocks/snow.png';
+const CLOUD_BLOCK_TEXTURE = 'blocks/snow.png';
 const CLOUD_BLOCK_HALF_EXTENTS: Vector3Like = { x: 0.5, y: 0.5, z: 0.5 };
 const CLOUD_BLOCK_SPREAD_XZ = 5;
 const CLOUD_BLOCK_SPREAD_Y = 2;
@@ -194,14 +194,14 @@ const LANDING_PLATFORM_Y = ANSWER_BLOCK_Y_POSITION - 80; // Much lower position 
 const LANDING_PLATFORM_SIZE = 14; // Adjusted size for a balance between detail and simplicity
 // Textures for different terrain types
 const LANDING_PLATFORM_TEXTURES = {
-    GRASS: 'assets/blocks/grass',
-    WATER: 'assets/blocks/water-still.png',
-    SAND: 'assets/blocks/sand.png',
-    STONE: 'assets/blocks/stone.png',
-    DIRT: 'assets/blocks/dirt.png',
-    WOOD: 'assets/blocks/oak-planks.png',
-    BRICK: 'assets/blocks/bricks.png',
-    LAVA: 'assets/blocks/lava/lava.png',
+    GRASS: 'blocks/grass',
+    WATER: 'blocks/water-still.png',
+    SAND: 'blocks/sand.png',
+    STONE: 'blocks/stone.png',
+    DIRT: 'blocks/dirt.png',
+    WOOD: 'blocks/oak-planks.png',
+    BRICK: 'blocks/bricks.png',
+    LAVA: 'blocks/lava/lava.png',
     SNOW: 'blocks/snow.png',
     LEAVES: 'blocks/oak-leaves.png'        // NEW: For better looking trees
 };
@@ -601,7 +601,7 @@ class LandingPlatformManager {
             z: platformCenter.z 
         };
         const sensorCollider = new Entity({
-            blockTextureUri: 'assets/blocks/water-still.png', // Subtle texture
+            blockTextureUri: 'blocks/water-still.png', // Subtle texture
             blockHalfExtents: { x: size, y: sensorHeight / 2, z: size },
             rigidBodyOptions: {
                 type: RigidBodyType.FIXED,
@@ -789,7 +789,7 @@ class LandingPlatformManager {
                      };
                      
                      const leavesBlock = new Entity({
-                         blockTextureUri: 'assets/blocks/oak-leaves.png', // Use oak leaves texture
+                         blockTextureUri: 'blocks/oak-leaves.png', // Use oak leaves texture
                          blockHalfExtents: LANDING_PLATFORM_BLOCK_HALF_EXTENTS,
                          rigidBodyOptions: {
                              type: RigidBodyType.FIXED,
@@ -816,7 +816,7 @@ class LandingPlatformManager {
             };
             
             const markerBlock = new Entity({
-                blockTextureUri: 'assets/blocks/emerald-block.png', // Bright green for visibility
+                blockTextureUri: 'blocks/emerald-block.png', // Bright green for visibility
                 blockHalfExtents: LANDING_PLATFORM_BLOCK_HALF_EXTENTS,
                 rigidBodyOptions: {
                     type: RigidBodyType.KINEMATIC_VELOCITY, // Make it rotate slowly
@@ -1982,8 +1982,8 @@ class MathGameManager {
     // Use different effect blocks for variety
     const effectTextures = [
         EFFECT_BLOCK_CORRECT_TEXTURE,
-        'assets/blocks/diamond-block.png',
-        'assets/blocks/gold-ore.png',
+        'blocks/diamond-block.png',
+        'blocks/gold-ore.png',
         TUNNEL_DECOR_TEXTURE_HYTOPIA_LOGO
     ];
     

@@ -10,10 +10,10 @@ export class ShieldBubblePowerUp extends PowerUpEntity {
     const options: PowerUpOptions = {
       name: 'Shield Bubble',
       duration: SHIELD_DURATION,
-      textureUri: 'assets/blocks/diamond-block.png', // Using diamond for protection
-      pickupSoundUri: 'assets/audio/sfx/power-up.wav',
-      activateSoundUri: 'assets/audio/sfx/correct.mp3',
-      deactivateSoundUri: 'assets/audio/sfx/damage/glass-break-01.mp3',
+      textureUri: 'blocks/diamond-block.png', // Using diamond for protection
+      pickupSoundUri: 'audio/sfx/power-up.wav',
+      activateSoundUri: 'audio/sfx/correct.mp3',
+      deactivateSoundUri: 'audio/sfx/damage/glass-break-01.mp3',
       description: 'Protects you from one wrong answer',
       color: { r: 100, g: 255, b: 255 } // Cyan color
     };
