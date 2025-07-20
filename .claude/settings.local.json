@@ -9,7 +9,8 @@
       "Bash(bun:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "WebFetch(domain:dev.hytopia.com)"
+      "WebFetch(domain:dev.hytopia.com)",
+      "Bash(rm:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

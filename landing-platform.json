@@ -6,15 +6,15 @@
     "sensorOffset": 25
   },
   "textures": {
-    "water": "blocks/water-still.png",
-    "sand": "blocks/sand.png",
-    "grass": "blocks/grass.png",
-    "dirt": "blocks/dirt.png",
-    "stone": "blocks/stone.png",
-    "snow": "blocks/snow.png",
-    "wood": "blocks/oak-planks.png",
-    "brick": "blocks/bricks.png",
-    "lava": "blocks/lava.png"
+    "water": "assets/blocks/water-still.png",
+    "sand": "assets/blocks/sand.png",
+    "grass": "assets/blocks/grass.png",
+    "dirt": "assets/blocks/dirt.png",
+    "stone": "assets/blocks/stone.png",
+    "snow": "assets/blocks/snow.png",
+    "wood": "assets/blocks/oak-planks.png",
+    "brick": "assets/blocks/bricks.png",
+    "lava": "assets/blocks/lava/lava.png"
   },
   "islandPattern": [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -51,13 +51,13 @@
   "decorationTypes": {
     "tree": {
       "trunkHeight": 4,
-      "trunkTexture": "blocks/oak-planks.png",
-      "leavesTexture": "blocks/oak-leaves.png",
+      "trunkTexture": "assets/blocks/oak-planks.png",
+      "leavesTexture": "assets/blocks/oak-leaves.png",
       "leavesSize": [3, 3, 3]
     },
     "landingMarker": {
       "height": 6,
-      "texture": "blocks/diamond-block.png",
+      "texture": "assets/blocks/diamond-block.png",
       "rotationSpeed": 0.7
     }
   }
