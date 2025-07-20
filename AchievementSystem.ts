@@ -1,4 +1,4 @@
-import { PlayerEntity, World, Entity, Vector3Like, RigidBodyType, ColliderShape } from 'hytopia';
+import { PlayerEntity, World, Entity, Vector3Like, RigidBodyType, ColliderShape, Player } from 'hytopia';
 import { MathTopic } from './CurriculumSystem';
 
 /**
@@ -193,6 +193,136 @@ export class AchievementSystem {
     } catch (error) {
       console.error('[AchievementSystem] Failed to initialize:', error);
       throw error; // Re-throw to let caller handle critical failure
+    }
+  }
+
+  /**
+   * Save player achievement progress to Hytopia persistence
+   */
+  private async _savePlayerAchievements(player: Player, progress: PlayerAchievementProgress): Promise<void> {
+    try {
+      const persistedData = await player.getPersistedData();
+      const achievementData = {
+        unlockedAchievements: Array.from(progress.unlockedAchievements),
+        totalPoints: progress.totalPoints,
+        currentStreak: progress.currentStreak,
+        bestStreak: progress.bestStreak,
+        allTimeStats: {
+          ...progress.allTimeStats,
+          topicsEngaged: Array.from(progress.allTimeStats.topicsEngaged),
+          firstPlayDate: progress.allTimeStats.firstPlayDate.toISOString(),
+          lastPlayDate: progress.allTimeStats.lastPlayDate.toISOString()
+        },
+        achievementProgress: Array.from(progress.achievementProgress.entries()).map(([id, prog]) => ({
+          achievementId: id,
+          progress: prog.progress,
+          maxProgress: prog.maxProgress,
+          isUnlocked: prog.isUnlocked,
+          unlockedDate: prog.unlockedDate?.toISOString(),
+          currentTier: prog.currentTier,
+          notificationShown: prog.notificationShown
+        }))
+      };
+
+      const updatedData = {
+        ...persistedData,
+        achievements: achievementData
+      };
+
+      await player.setPersistedData(updatedData);
+      console.log(`[AchievementSystem] Saved achievement data for player ${player.id}`);
+    } catch (error) {
+      console.error(`[AchievementSystem] Failed to save achievement data for player ${player.id}:`, error);
+    }
+  }
+
+  /**
+   * Load player achievement progress from Hytopia persistence
+   */
+  private async _loadPlayerAchievements(player: Player): Promise<PlayerAchievementProgress | null> {
+    try {
+      const persistedData = await player.getPersistedData();
+      const achievementData = persistedData?.achievements;
+      
+      if (!achievementData) {
+        return null;
+      }
+
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const thisWeek = this._getWeekString(now);
+
+      const progress: PlayerAchievementProgress = {
+        playerId: player.id,
+        unlockedAchievements: new Set(achievementData.unlockedAchievements || []),
+        achievementProgress: new Map(),
+        totalPoints: achievementData.totalPoints || 0,
+        currentStreak: achievementData.currentStreak || 0,
+        bestStreak: achievementData.bestStreak || 0,
+        sessionStats: {
+          questionsAnswered: 0,
+          correctAnswers: 0,
+          currentStreak: 0,
+          averageResponseTime: 0,
+          topicsEngaged: new Set(),
+          sessionStartTime: now,
+          sessionDuration: 0,
+          perfectAnswers: 0
+        },
+        dailyStats: {
+          date: today,
+          questionsAnswered: 0,
+          correctAnswers: 0,
+          bestStreak: 0,
+          totalPlayTime: 0,
+          topicsEngaged: new Set(),
+          sessionsPlayed: 0
+        },
+        weeklyStats: {
+          week: thisWeek,
+          questionsAnswered: 0,
+          correctAnswers: 0,
+          bestStreak: 0,
+          totalPlayTime: 0,
+          topicsEngaged: new Set(),
+          sessionsPlayed: 0,
+          consistencyDays: 0
+        },
+        allTimeStats: {
+          totalQuestionsAnswered: achievementData.allTimeStats?.totalQuestionsAnswered || 0,
+          totalCorrectAnswers: achievementData.allTimeStats?.totalCorrectAnswers || 0,
+          bestStreak: achievementData.allTimeStats?.bestStreak || 0,
+          totalPlayTime: achievementData.allTimeStats?.totalPlayTime || 0,
+          topicsEngaged: new Set(achievementData.allTimeStats?.topicsEngaged || []),
+          totalSessions: achievementData.allTimeStats?.totalSessions || 0,
+          firstPlayDate: achievementData.allTimeStats?.firstPlayDate ? 
+            new Date(achievementData.allTimeStats.firstPlayDate) : now,
+          lastPlayDate: achievementData.allTimeStats?.lastPlayDate ? 
+            new Date(achievementData.allTimeStats.lastPlayDate) : now
+        }
+      };
+
+      // Restore achievement progress
+      if (achievementData.achievementProgress) {
+        achievementData.achievementProgress.forEach((prog: any) => {
+          const achievementProgress: AchievementProgress = {
+            achievementId: prog.achievementId,
+            progress: prog.progress || 0,
+            maxProgress: prog.maxProgress || 0,
+            isUnlocked: prog.isUnlocked || false,
+            unlockedDate: prog.unlockedDate ? new Date(prog.unlockedDate) : undefined,
+            currentTier: prog.currentTier || 0,
+            notificationShown: prog.notificationShown || false
+          };
+          progress.achievementProgress.set(prog.achievementId, achievementProgress);
+        });
+      }
+
+      console.log(`[AchievementSystem] Loaded achievement data for player ${player.id}`);
+      return progress;
+    } catch (error) {
+      console.error(`[AchievementSystem] Failed to load achievement data for player ${player.id}:`, error);
+      return null;
     }
   }
 
@@ -396,17 +526,42 @@ export class AchievementSystem {
   }
 
   /**
-   * Initialize player progress
+   * Initialize player progress with persistence support
    */
-  public initializePlayerProgress(playerId: string): void {
-    if (this._playerProgress.has(playerId)) return;
+  public async initializePlayerProgress(player: Player): Promise<void> {
+    if (this._playerProgress.has(player.id)) return;
 
+    // Try to load existing progress first
+    const loadedProgress = await this._loadPlayerAchievements(player);
+    
+    if (loadedProgress) {
+      // Fill in any missing achievement progress for new achievements
+      this._achievements.forEach((achievement, id) => {
+        if (!loadedProgress.achievementProgress.has(id)) {
+          const achievementProgress: AchievementProgress = {
+            achievementId: id,
+            progress: 0,
+            maxProgress: achievement.requirements[0].value,
+            isUnlocked: false,
+            currentTier: 0,
+            notificationShown: false
+          };
+          loadedProgress.achievementProgress.set(id, achievementProgress);
+        }
+      });
+      
+      this._playerProgress.set(player.id, loadedProgress);
+      console.log(`[AchievementSystem] Loaded existing progress for player ${player.id}`);
+      return;
+    }
+
+    // Create new progress if none exists
     const now = new Date();
     const today = now.toISOString().split('T')[0];
     const thisWeek = this._getWeekString(now);
 
     const progress: PlayerAchievementProgress = {
-      playerId,
+      playerId: player.id,
       unlockedAchievements: new Set(),
       achievementProgress: new Map(),
       totalPoints: 0,
@@ -466,19 +621,22 @@ export class AchievementSystem {
       progress.achievementProgress.set(id, achievementProgress);
     });
 
-    this._playerProgress.set(playerId, progress);
-    console.log(`[AchievementSystem] Initialized progress for player ${playerId}`);
+    this._playerProgress.set(player.id, progress);
+    
+    // Save initial progress
+    await this._savePlayerAchievements(player, progress);
+    console.log(`[AchievementSystem] Initialized new progress for player ${player.id}`);
   }
 
   /**
-   * Record player action
+   * Record player action with automatic persistence
    */
-  public recordAction(
-    playerId: string,
+  public async recordAction(
+    player: Player,
     action: 'question_answered' | 'correct_answer' | 'wrong_answer' | 'session_start' | 'session_end',
     data?: { topic?: MathTopic; responseTime?: number; accuracy?: number }
-  ): void {
-    const progress = this._playerProgress.get(playerId);
+  ): Promise<void> {
+    const progress = this._playerProgress.get(player.id);
     if (!progress) return;
 
     const now = new Date();
@@ -569,13 +727,45 @@ export class AchievementSystem {
     }
 
     // Check for achievement progress
-    this._checkPlayerAchievements(playerId);
+    await this._checkPlayerAchievements(player);
+    
+    // Save progress periodically (every few actions to avoid excessive saves)
+    if (action === 'session_end' || (action === 'correct_answer' && progress.currentStreak % 5 === 0)) {
+      await this._savePlayerAchievements(player, progress);
+    }
   }
 
   /**
-   * Check achievements for a specific player
+   * Check achievements for a specific player with persistence support
    */
-  private _checkPlayerAchievements(playerId: string): void {
+  private async _checkPlayerAchievements(player: Player): Promise<void> {
+    const progress = this._playerProgress.get(player.id);
+    if (!progress) return;
+
+    const unlockedAchievements: Achievement[] = [];
+
+    this._achievements.forEach((achievement, id) => {
+      const achievementProgress = progress.achievementProgress.get(id);
+      if (!achievementProgress || achievementProgress.isUnlocked) return;
+
+      const meetsRequirements = this._checkAchievementRequirements(achievement, progress);
+      if (meetsRequirements) {
+        unlockedAchievements.push(achievement);
+      }
+    });
+
+    // Unlock achievements and save once at the end
+    for (const achievement of unlockedAchievements) {
+      await this._unlockAchievement(player, achievement);
+    }
+  }
+
+  /**
+   * Check achievements for a specific player (sync version for compatibility)
+   */
+  private _checkPlayerAchievementsSync(playerId: string): void {
+    // This method maintains compatibility but doesn't persist
+    // Used only for periodic checks where we don't have Player object
     const progress = this._playerProgress.get(playerId);
     if (!progress) return;
 
@@ -585,7 +775,15 @@ export class AchievementSystem {
 
       const meetsRequirements = this._checkAchievementRequirements(achievement, progress);
       if (meetsRequirements) {
-        this._unlockAchievement(playerId, achievement);
+        // Mark as unlocked but don't persist (will be saved on next recordAction)
+        achievementProgress.isUnlocked = true;
+        achievementProgress.unlockedDate = new Date();
+        achievementProgress.currentTier = Math.min((achievementProgress.currentTier || 0) + 1, achievement.maxTiers || 1);
+        
+        progress.unlockedAchievements.add(achievement.id);
+        progress.totalPoints += achievement.points;
+
+        console.log(`[AchievementSystem] Player ${playerId} unlocked achievement: ${achievement.name} (deferred save)`);
       }
     });
   }
@@ -688,10 +886,10 @@ export class AchievementSystem {
   }
 
   /**
-   * Unlock achievement
+   * Unlock achievement with immediate persistence
    */
-  private _unlockAchievement(playerId: string, achievement: Achievement): void {
-    const progress = this._playerProgress.get(playerId);
+  private async _unlockAchievement(player: Player, achievement: Achievement): Promise<void> {
+    const progress = this._playerProgress.get(player.id);
     if (!progress) return;
 
     const achievementProgress = progress.achievementProgress.get(achievement.id);
@@ -707,19 +905,22 @@ export class AchievementSystem {
     // Create notification
     const notification: AchievementNotification = {
       achievement,
-      playerId,
+      playerId: player.id,
       unlockedDate: new Date(),
       isNewTier: achievementProgress.currentTier > 1,
       previousTier: achievementProgress.currentTier - 1,
       currentTier: achievementProgress.currentTier
     };
 
-    if (!this._pendingNotifications.has(playerId)) {
-      this._pendingNotifications.set(playerId, []);
+    if (!this._pendingNotifications.has(player.id)) {
+      this._pendingNotifications.set(player.id, []);
     }
-    this._pendingNotifications.get(playerId)!.push(notification);
+    this._pendingNotifications.get(player.id)!.push(notification);
 
-    console.log(`[AchievementSystem] Player ${playerId} unlocked achievement: ${achievement.name} (Tier ${achievementProgress.currentTier})`);
+    // Save achievement progress immediately
+    await this._savePlayerAchievements(player, progress);
+
+    console.log(`[AchievementSystem] Player ${player.id} unlocked achievement: ${achievement.name} (Tier ${achievementProgress.currentTier})`);
   }
 
   /**
@@ -727,7 +928,7 @@ export class AchievementSystem {
    */
   private _checkAllPlayerAchievements(): void {
     this._playerProgress.forEach((progress, playerId) => {
-      this._checkPlayerAchievements(playerId);
+      this._checkPlayerAchievementsSync(playerId);
     });
   }
 

@@ -1,4 +1,4 @@
-import { PlayerEntity, World, ui } from 'hytopia';
+import { PlayerEntity, World, ui, Player } from 'hytopia';
 import { CurriculumSystem, MathTopic, PlayerProgress, TopicProgress } from './CurriculumSystem';
 
 /**
@@ -99,6 +99,163 @@ export class LearningAnalyticsDashboard {
   }
 
   /**
+   * Save player analytics data to Hytopia persistence
+   */
+  private async _savePlayerAnalytics(player: Player): Promise<void> {
+    try {
+      const persistedData = await player.getPersistedData();
+      const playerMetrics = this._playerMetrics.get(player.id);
+      const currentSession = this._currentSessions.get(player.id);
+      
+      if (!playerMetrics) return;
+
+      const analyticsData = {
+        currentMetrics: {
+          playerId: playerMetrics.playerId,
+          sessionStartTime: playerMetrics.sessionStartTime.toISOString(),
+          sessionEndTime: playerMetrics.sessionEndTime?.toISOString(),
+          questionsAttempted: playerMetrics.questionsAttempted,
+          correctAnswers: playerMetrics.correctAnswers,
+          accuracy: playerMetrics.accuracy,
+          averageResponseTime: playerMetrics.averageResponseTime,
+          improvements: playerMetrics.improvements,
+          recommendations: playerMetrics.recommendations,
+          topicPerformance: Array.from(playerMetrics.topicPerformance.entries()).map(([topic, metrics]) => ({
+            topic,
+            attempted: metrics.attempted,
+            correct: metrics.correct,
+            accuracy: metrics.accuracy,
+            averageTime: metrics.averageTime,
+            improvement: metrics.improvement,
+            difficulty: metrics.difficulty
+          }))
+        },
+        currentSession: currentSession ? {
+          playerId: currentSession.playerId,
+          sessionId: currentSession.sessionId,
+          startTime: currentSession.startTime.toISOString(),
+          endTime: currentSession.endTime?.toISOString(),
+          questionsAnswered: currentSession.questionsAnswered,
+          correctAnswers: currentSession.correctAnswers,
+          timeSpent: currentSession.timeSpent,
+          topicsEngaged: currentSession.topicsEngaged,
+          performanceScore: currentSession.performanceScore,
+          difficultyProgression: currentSession.difficultyProgression
+        } : null,
+        sessionHistory: this._sessionHistory.get(player.id)?.map(session => ({
+          playerId: session.playerId,
+          sessionId: session.sessionId,
+          startTime: session.startTime.toISOString(),
+          endTime: session.endTime?.toISOString(),
+          questionsAnswered: session.questionsAnswered,
+          correctAnswers: session.correctAnswers,
+          timeSpent: session.timeSpent,
+          topicsEngaged: session.topicsEngaged,
+          performanceScore: session.performanceScore,
+          difficultyProgression: session.difficultyProgression
+        })) || []
+      };
+
+      const updatedData = {
+        ...persistedData,
+        analytics: analyticsData
+      };
+
+      await player.setPersistedData(updatedData);
+      console.log(`[LearningAnalyticsDashboard] Saved analytics data for player ${player.id}`);
+    } catch (error) {
+      console.error(`[LearningAnalyticsDashboard] Failed to save analytics data for player ${player.id}:`, error);
+    }
+  }
+
+  /**
+   * Load player analytics data from Hytopia persistence
+   */
+  private async _loadPlayerAnalytics(player: Player): Promise<void> {
+    try {
+      const persistedData = await player.getPersistedData();
+      const analyticsData = persistedData?.analytics;
+      
+      if (!analyticsData) return;
+
+      // Restore current metrics
+      if (analyticsData.currentMetrics) {
+        const topicPerformance = new Map<MathTopic, TopicMetrics>();
+        if (analyticsData.currentMetrics.topicPerformance) {
+          analyticsData.currentMetrics.topicPerformance.forEach((topicData: any) => {
+            topicPerformance.set(topicData.topic, {
+              topic: topicData.topic,
+              attempted: topicData.attempted || 0,
+              correct: topicData.correct || 0,
+              accuracy: topicData.accuracy || 0,
+              averageTime: topicData.averageTime || 0,
+              improvement: topicData.improvement || 0,
+              difficulty: topicData.difficulty || 'beginner'
+            });
+          });
+        }
+
+        const metrics: PerformanceMetrics = {
+          playerId: player.id,
+          sessionStartTime: new Date(analyticsData.currentMetrics.sessionStartTime),
+          sessionEndTime: analyticsData.currentMetrics.sessionEndTime ? 
+            new Date(analyticsData.currentMetrics.sessionEndTime) : undefined,
+          questionsAttempted: analyticsData.currentMetrics.questionsAttempted || 0,
+          correctAnswers: analyticsData.currentMetrics.correctAnswers || 0,
+          accuracy: analyticsData.currentMetrics.accuracy || 0,
+          averageResponseTime: analyticsData.currentMetrics.averageResponseTime || 0,
+          topicPerformance,
+          improvements: analyticsData.currentMetrics.improvements || [],
+          recommendations: analyticsData.currentMetrics.recommendations || []
+        };
+
+        this._playerMetrics.set(player.id, metrics);
+      }
+
+      // Restore current session
+      if (analyticsData.currentSession) {
+        const session: SessionAnalytics = {
+          playerId: player.id,
+          sessionId: analyticsData.currentSession.sessionId,
+          startTime: new Date(analyticsData.currentSession.startTime),
+          endTime: analyticsData.currentSession.endTime ? 
+            new Date(analyticsData.currentSession.endTime) : undefined,
+          questionsAnswered: analyticsData.currentSession.questionsAnswered || 0,
+          correctAnswers: analyticsData.currentSession.correctAnswers || 0,
+          timeSpent: analyticsData.currentSession.timeSpent || 0,
+          topicsEngaged: analyticsData.currentSession.topicsEngaged || [],
+          performanceScore: analyticsData.currentSession.performanceScore || 0,
+          difficultyProgression: analyticsData.currentSession.difficultyProgression || false
+        };
+
+        this._currentSessions.set(player.id, session);
+      }
+
+      // Restore session history
+      if (analyticsData.sessionHistory) {
+        const history = analyticsData.sessionHistory.map((sessionData: any) => ({
+          playerId: player.id,
+          sessionId: sessionData.sessionId,
+          startTime: new Date(sessionData.startTime),
+          endTime: sessionData.endTime ? new Date(sessionData.endTime) : undefined,
+          questionsAnswered: sessionData.questionsAnswered || 0,
+          correctAnswers: sessionData.correctAnswers || 0,
+          timeSpent: sessionData.timeSpent || 0,
+          topicsEngaged: sessionData.topicsEngaged || [],
+          performanceScore: sessionData.performanceScore || 0,
+          difficultyProgression: sessionData.difficultyProgression || false
+        }));
+
+        this._sessionHistory.set(player.id, history);
+      }
+
+      console.log(`[LearningAnalyticsDashboard] Loaded analytics data for player ${player.id}`);
+    } catch (error) {
+      console.error(`[LearningAnalyticsDashboard] Failed to load analytics data for player ${player.id}:`, error);
+    }
+  }
+
+  /**
    * Initialize the analytics dashboard
    */
   public initialize(world: World): void {
@@ -121,12 +278,23 @@ export class LearningAnalyticsDashboard {
   }
 
   /**
-   * Start a learning session
+   * Initialize player analytics with persistence support
    */
-  public startSession(playerId: string): string {
-    const sessionId = `session_${playerId}_${Date.now()}`;
+  public async initializePlayerAnalytics(player: Player): Promise<void> {
+    // Load existing analytics data
+    await this._loadPlayerAnalytics(player);
+    
+    // If no data exists, the maps will remain empty (which is fine)
+    console.log(`[LearningAnalyticsDashboard] Initialized analytics for player ${player.id}`);
+  }
+
+  /**
+   * Start a learning session with persistence support
+   */
+  public async startSession(player: Player): Promise<string> {
+    const sessionId = `session_${player.id}_${Date.now()}`;
     const session: SessionAnalytics = {
-      playerId,
+      playerId: player.id,
       sessionId,
       startTime: new Date(),
       questionsAnswered: 0,
@@ -137,22 +305,25 @@ export class LearningAnalyticsDashboard {
       difficultyProgression: false
     };
 
-    this._currentSessions.set(playerId, session);
+    this._currentSessions.set(player.id, session);
     
     // Initialize session analytics array if not exists
-    if (!this._sessionAnalytics.has(playerId)) {
-      this._sessionAnalytics.set(playerId, []);
+    if (!this._sessionAnalytics.has(player.id)) {
+      this._sessionAnalytics.set(player.id, []);
     }
 
-    console.log(`[LearningAnalyticsDashboard] Started session ${sessionId} for player ${playerId}`);
+    // Save session start
+    await this._savePlayerAnalytics(player);
+
+    console.log(`[LearningAnalyticsDashboard] Started session ${sessionId} for player ${player.id}`);
     return sessionId;
   }
 
   /**
-   * End a learning session
+   * End a learning session with persistence support
    */
-  public endSession(playerId: string): SessionAnalytics | null {
-    const currentSession = this._currentSessions.get(playerId);
+  public async endSession(player: Player): Promise<SessionAnalytics | null> {
+    const currentSession = this._currentSessions.get(player.id);
     if (!currentSession) return null;
 
     currentSession.endTime = new Date();
@@ -160,13 +331,23 @@ export class LearningAnalyticsDashboard {
     currentSession.performanceScore = this._calculatePerformanceScore(currentSession);
 
     // Store session in history
-    this._sessionAnalytics.get(playerId)!.push(currentSession);
-    this._currentSessions.delete(playerId);
+    this._sessionAnalytics.get(player.id)!.push(currentSession);
+    
+    // Also store in session history map
+    if (!this._sessionHistory.has(player.id)) {
+      this._sessionHistory.set(player.id, []);
+    }
+    this._sessionHistory.get(player.id)!.push(currentSession);
+    
+    this._currentSessions.delete(player.id);
 
     // Update learning patterns
-    this._updateLearningPattern(playerId);
+    this._updateLearningPattern(player.id);
 
-    console.log(`[LearningAnalyticsDashboard] Ended session ${currentSession.sessionId} for player ${playerId}`);
+    // Save final session data
+    await this._savePlayerAnalytics(player);
+
+    console.log(`[LearningAnalyticsDashboard] Ended session ${currentSession.sessionId} for player ${player.id}`);
     return currentSession;
   }
 

@@ -1,4 +1,4 @@
-import { PlayerEntity } from 'hytopia';
+import { PlayerEntity, Player } from 'hytopia';
 
 /**
  * Math Topic Enumeration
@@ -114,6 +114,101 @@ export class CurriculumSystem {
       CurriculumSystem._instance = new CurriculumSystem();
     }
     return CurriculumSystem._instance;
+  }
+
+  /**
+   * Save player curriculum progress to Hytopia persistence
+   */
+  private async _savePlayerProgress(player: Player, progress: PlayerProgress): Promise<void> {
+    try {
+      const persistedData = await player.getPersistedData();
+      const curriculumData = {
+        currentGrade: progress.currentGrade,
+        currentTopic: progress.currentTopic,
+        totalQuestionsAnswered: progress.totalQuestionsAnswered,
+        totalCorrectAnswers: progress.totalCorrectAnswers,
+        overallAccuracy: progress.overallAccuracy,
+        currentStreak: progress.currentStreak,
+        longestStreak: progress.longestStreak,
+        averageResponseTime: progress.averageResponseTime,
+        lastPlayedDate: progress.lastPlayedDate.toISOString(),
+        topicProgress: Array.from(progress.topicProgress.entries()).map(([topic, topicProg]) => ({
+          topic,
+          questionsAnswered: topicProg.questionsAnswered,
+          correctAnswers: topicProg.correctAnswers,
+          accuracy: topicProg.accuracy,
+          averageTime: topicProg.averageTime,
+          currentStreak: topicProg.currentStreak,
+          bestStreak: topicProg.bestStreak,
+          isUnlocked: topicProg.isUnlocked,
+          isCompleted: topicProg.isCompleted,
+          difficultyLevel: topicProg.difficultyLevel
+        }))
+      };
+
+      const updatedData = {
+        ...persistedData,
+        curriculum: curriculumData
+      };
+
+      await player.setPersistedData(updatedData);
+      console.log(`[CurriculumSystem] Saved curriculum data for player ${player.id}`);
+    } catch (error) {
+      console.error(`[CurriculumSystem] Failed to save curriculum data for player ${player.id}:`, error);
+    }
+  }
+
+  /**
+   * Load player curriculum progress from Hytopia persistence
+   */
+  private async _loadPlayerProgress(player: Player): Promise<PlayerProgress | null> {
+    try {
+      const persistedData = await player.getPersistedData();
+      const curriculumData = persistedData?.curriculum;
+      
+      if (!curriculumData) {
+        return null;
+      }
+
+      const topicProgress = new Map<MathTopic, TopicProgress>();
+      if (curriculumData.topicProgress) {
+        curriculumData.topicProgress.forEach((topicProg: any) => {
+          topicProgress.set(topicProg.topic, {
+            topic: topicProg.topic,
+            questionsAnswered: topicProg.questionsAnswered || 0,
+            correctAnswers: topicProg.correctAnswers || 0,
+            accuracy: topicProg.accuracy || 0,
+            averageTime: topicProg.averageTime || 0,
+            currentStreak: topicProg.currentStreak || 0,
+            bestStreak: topicProg.bestStreak || 0,
+            isUnlocked: topicProg.isUnlocked || false,
+            isCompleted: topicProg.isCompleted || false,
+            difficultyLevel: topicProg.difficultyLevel || DifficultyLevel.BEGINNER
+          });
+        });
+      }
+
+      const progress: PlayerProgress = {
+        playerId: player.id,
+        currentGrade: curriculumData.currentGrade || 1,
+        currentTopic: curriculumData.currentTopic || MathTopic.BASIC_ARITHMETIC,
+        topicProgress,
+        totalQuestionsAnswered: curriculumData.totalQuestionsAnswered || 0,
+        totalCorrectAnswers: curriculumData.totalCorrectAnswers || 0,
+        overallAccuracy: curriculumData.overallAccuracy || 0,
+        currentStreak: curriculumData.currentStreak || 0,
+        longestStreak: curriculumData.longestStreak || 0,
+        averageResponseTime: curriculumData.averageResponseTime || 0,
+        lastPlayedDate: curriculumData.lastPlayedDate ? 
+          new Date(curriculumData.lastPlayedDate) : new Date()
+      };
+
+      console.log(`[CurriculumSystem] Loaded curriculum data for player ${player.id}`);
+      return progress;
+    } catch (error) {
+      console.error(`[CurriculumSystem] Failed to load curriculum data for player ${player.id}:`, error);
+      return null;
+    }
   }
 
   /**
@@ -235,11 +330,46 @@ export class CurriculumSystem {
   }
 
   /**
-   * Initialize player progress
+   * Initialize player progress with persistence support
    */
-  public initializePlayerProgress(playerId: string): PlayerProgress {
+  public async initializePlayerProgress(player: Player): Promise<PlayerProgress> {
+    // Check if progress already exists in memory
+    const existingProgress = this._playerProgress.get(player.id);
+    if (existingProgress) {
+      return existingProgress;
+    }
+
+    // Try to load existing progress from persistence
+    const loadedProgress = await this._loadPlayerProgress(player);
+    
+    if (loadedProgress) {
+      // Ensure all topics are present (in case new topics were added)
+      Object.values(MathTopic).forEach(topic => {
+        if (!loadedProgress.topicProgress.has(topic)) {
+          const topicProgress: TopicProgress = {
+            topic,
+            questionsAnswered: 0,
+            correctAnswers: 0,
+            accuracy: 0,
+            averageTime: 0,
+            currentStreak: 0,
+            bestStreak: 0,
+            isUnlocked: topic === MathTopic.BASIC_ARITHMETIC,
+            isCompleted: false,
+            difficultyLevel: DifficultyLevel.BEGINNER
+          };
+          loadedProgress.topicProgress.set(topic, topicProgress);
+        }
+      });
+      
+      this._playerProgress.set(player.id, loadedProgress);
+      console.log(`[CurriculumSystem] Loaded existing progress for player ${player.id}`);
+      return loadedProgress;
+    }
+
+    // Create new progress if none exists
     const progress: PlayerProgress = {
-      playerId,
+      playerId: player.id,
       currentGrade: 1,
       currentTopic: MathTopic.BASIC_ARITHMETIC,
       topicProgress: new Map(),
@@ -269,8 +399,11 @@ export class CurriculumSystem {
       progress.topicProgress.set(topic, topicProgress);
     });
 
-    this._playerProgress.set(playerId, progress);
-    console.log(`[CurriculumSystem] Initialized progress for player ${playerId}`);
+    this._playerProgress.set(player.id, progress);
+    
+    // Save initial progress
+    await this._savePlayerProgress(player, progress);
+    console.log(`[CurriculumSystem] Initialized new progress for player ${player.id}`);
     return progress;
   }
 
@@ -323,13 +456,13 @@ export class CurriculumSystem {
   }
 
   /**
-   * Record player answer
+   * Record player answer with automatic persistence
    */
-  public recordAnswer(playerId: string, questionId: string, answer: number, responseTime: number): boolean {
-    const progress = this.getPlayerProgress(playerId);
+  public async recordAnswer(player: Player, questionId: string, answer: number, responseTime: number): Promise<boolean> {
+    const progress = this.getPlayerProgress(player.id);
     if (!progress) return false;
 
-    const currentQuestions = this._currentQuestions.get(playerId) || [];
+    const currentQuestions = this._currentQuestions.get(player.id) || [];
     const question = currentQuestions.find(q => q.id === questionId);
     if (!question) return false;
 
@@ -366,9 +499,14 @@ export class CurriculumSystem {
     progress.lastPlayedDate = new Date();
 
     // Check for progression
-    this._checkProgression(playerId);
+    this._checkProgression(player.id);
 
-    console.log(`[CurriculumSystem] Recorded answer for player ${playerId}: ${isCorrect ? 'correct' : 'wrong'} (${responseTime}ms)`);
+    // Save progress periodically (every few answers to avoid excessive saves)
+    if (progress.totalQuestionsAnswered % 3 === 0 || isCorrect && progress.currentStreak % 5 === 0) {
+      await this._savePlayerProgress(player, progress);
+    }
+
+    console.log(`[CurriculumSystem] Recorded answer for player ${player.id}: ${isCorrect ? 'correct' : 'wrong'} (${responseTime}ms)`);
     return isCorrect;
   }
 
