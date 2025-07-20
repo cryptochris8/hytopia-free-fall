@@ -10,10 +10,10 @@ export class SlowMotionPowerUp extends PowerUpEntity {
     const options: PowerUpOptions = {
       name: 'Slow Motion',
       duration: SLOW_MOTION_DURATION,
-      textureUri: 'blocks/ice.png', // Using ice texture for slow effect
-      pickupSoundUri: 'audio/sfx/correct.mp3',
-      activateSoundUri: 'audio/sfx/correct.mp3',
-      deactivateSoundUri: 'audio/sfx/notification-1.mp3',
+      textureUri: 'assets/blocks/ice.png', // Using ice texture for slow effect
+      pickupSoundUri: 'assets/audio/sfx/power-up.wav',
+      activateSoundUri: 'assets/audio/sfx/correct.mp3',
+      deactivateSoundUri: 'assets/audio/sfx/ui/notification-1.mp3',
       description: 'Slows down your fall speed for precise movements',
       color: { r: 150, g: 200, b: 255 } // Light blue color
     };

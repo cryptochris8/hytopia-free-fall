@@ -62,7 +62,7 @@ export class FragmentPool {
     for (let i = 0; i < this._poolSize; i++) {
       const fragment = new Entity({
         ...this._fragmentOptions,
-        blockTextureUri: 'blocks/stone.png' // Default texture
+        blockTextureUri: 'assets/blocks/stone.png' // Default texture
       });
       
       // Spawn the fragment at a far-away position initially

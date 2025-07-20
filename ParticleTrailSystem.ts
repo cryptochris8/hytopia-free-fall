@@ -11,7 +11,7 @@ export class ParticleTrailSystem {
   // Particle configurations for different effects
   private readonly _configs = {
     sparkleTrail: {
-      textureUri: 'textures/particles/sparkle.png',
+      textureUri: 'assets/blocks/diamond-block.png',
       offset: { x: 0, y: 0.5, z: 0 },
       velocity: { x: 0, y: 1, z: 0 },
       velocityVariance: { x: 1.5, y: 0.5, z: 1.5 },
@@ -33,7 +33,7 @@ export class ParticleTrailSystem {
     },
     
     speedTrail: {
-      textureUri: 'textures/particles/speed-line.png',
+      textureUri: 'assets/blocks/water/water-flow.png',
       offset: { x: 0, y: 0.3, z: 0 },
       velocity: { x: 0, y: 3, z: 0 },
       velocityVariance: { x: 0.5, y: 1, z: 0.5 },
@@ -51,7 +51,7 @@ export class ParticleTrailSystem {
     },
     
     windTrail: {
-      textureUri: 'textures/particles/wind.png',
+      textureUri: 'assets/blocks/glass.png',
       offset: { x: 0, y: 0, z: 0 },
       velocity: { x: 0, y: 2, z: 0 },
       velocityVariance: { x: 3, y: 1, z: 3 },
@@ -182,7 +182,7 @@ export class ParticleTrailSystem {
     if (!this._world) return;
 
     const burstConfig = {
-      textureUri: 'textures/particles/impact.png',
+      textureUri: 'assets/blocks/fire/fire_01.png',
       position: position,
       velocity: { x: 0, y: 5, z: 0 },
       velocityVariance: { x: 5, y: 3, z: 5 },

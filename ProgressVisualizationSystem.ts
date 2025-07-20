@@ -662,7 +662,7 @@ export class ProgressVisualizationSystem {
       };
 
       const achievementEntity = new Entity({
-        blockTextureUri: 'blocks/gold.png',
+        blockTextureUri: 'assets/blocks/gold-ore.png',
         blockHalfExtents: { x: 0.4, y: 0.4, z: 0.1 },
         rigidBodyOptions: {
           type: RigidBodyType.DYNAMIC,

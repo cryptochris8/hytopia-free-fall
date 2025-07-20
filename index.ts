@@ -601,7 +601,7 @@ class LandingPlatformManager {
             z: platformCenter.z 
         };
         const sensorCollider = new Entity({
-            blockTextureUri: 'blocks/water.png', // Subtle texture
+            blockTextureUri: 'assets/blocks/water-still.png', // Subtle texture
             blockHalfExtents: { x: size, y: sensorHeight / 2, z: size },
             rigidBodyOptions: {
                 type: RigidBodyType.FIXED,
@@ -816,7 +816,7 @@ class LandingPlatformManager {
             };
             
             const markerBlock = new Entity({
-                blockTextureUri: 'blocks/emerald-block.png', // Bright green for visibility
+                blockTextureUri: 'assets/blocks/emerald-block.png', // Bright green for visibility
                 blockHalfExtents: LANDING_PLATFORM_BLOCK_HALF_EXTENTS,
                 rigidBodyOptions: {
                     type: RigidBodyType.KINEMATIC_VELOCITY, // Make it rotate slowly
