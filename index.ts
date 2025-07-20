@@ -194,16 +194,16 @@ const LANDING_PLATFORM_Y = ANSWER_BLOCK_Y_POSITION - 80; // Much lower position 
 const LANDING_PLATFORM_SIZE = 14; // Adjusted size for a balance between detail and simplicity
 // Textures for different terrain types
 const LANDING_PLATFORM_TEXTURES = {
-    GRASS: 'blocks/grass.png',
-    WATER: 'blocks/water.png',
+    GRASS: 'blocks/grass-block.png',
+    WATER: 'blocks/water-still.png',
     SAND: 'blocks/sand.png',
     STONE: 'blocks/stone.png',
     DIRT: 'blocks/dirt.png',
-    WOOD: 'blocks/wood-planks.png',
-    BRICK: 'blocks/brick.png',
+    WOOD: 'blocks/oak-planks.png',
+    BRICK: 'blocks/bricks.png',
     LAVA: 'blocks/lava.png',
     SNOW: 'blocks/snow.png',
-    LEAVES: 'blocks/leaves.png'        // NEW: For better looking trees
+    LEAVES: 'blocks/oak-leaves.png'        // NEW: For better looking trees
 };
 const LANDING_PLATFORM_BLOCK_HALF_EXTENTS: Vector3Like = { x: 0.5, y: 0.5, z: 0.5 };
 
