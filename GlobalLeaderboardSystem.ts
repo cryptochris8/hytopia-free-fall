@@ -384,14 +384,24 @@ export default class GlobalLeaderboardSystem {
   }
 
   private savePlayerStats(player: Player, stats: PlayerStats): void {
-    // Save to persisted data
-    player.getPersistedData().then(data => {
-      const updatedData = {
-        ...data,
-        globalStats: stats
-      };
-      player.setPersistedData(updatedData);
-    });
+    // Save to persisted data - check if methods exist to avoid errors
+    if (player && typeof player.getPersistedData === 'function' && typeof player.setPersistedData === 'function') {
+      try {
+        player.getPersistedData().then(data => {
+          const updatedData = {
+            ...data,
+            globalStats: stats
+          };
+          player.setPersistedData(updatedData);
+        }).catch(error => {
+          console.warn('[GlobalLeaderboardSystem] Failed to save player stats:', error);
+        });
+      } catch (error) {
+        console.warn('[GlobalLeaderboardSystem] Error accessing player persistence methods:', error);
+      }
+    } else {
+      console.warn('[GlobalLeaderboardSystem] Player object does not have persistence methods available');
+    }
   }
 
   private startPeriodicUpdates(): void {

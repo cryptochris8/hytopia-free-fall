@@ -1586,6 +1586,10 @@ class MathGameManager {
        const question = adaptiveQuestions[0];
        console.log(`[MathGameManager] Using adaptive curriculum question for ${player.username}: ${question.question}`);
        
+       // Store the correct answer IN THE PLAYER'S STATE
+       playerState.currentAnswer = question.correctAnswer;
+       playerGameStateMap.set(player.username, playerState); // Update map
+       
        // Store the question for answer validation
        this._answerBlocksManager.setCurrentQuestion(question);
        

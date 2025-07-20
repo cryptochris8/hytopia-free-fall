@@ -466,10 +466,22 @@ export class ProgressVisualizationSystem {
     try {
       // Update texture based on current data
       const newTexture = this._getElementTexture(element.type, element.data);
-      if (element.entity.setBlockTextureUri && typeof element.entity.setBlockTextureUri === 'function') {
-        element.entity.setBlockTextureUri(newTexture);
-      } else {
-        console.warn('[ProgressVisualizationSystem] setBlockTextureUri method not available on entity');
+      
+      // Since block textures cannot be changed after creation, recreate the entity
+      // Store current position and other properties
+      const currentPosition = element.entity.position;
+      const currentRotation = element.entity.rotation;
+      
+      // Despawn the old entity
+      if (element.entity.isSpawned) {
+        element.entity.despawn();
+      }
+      
+      // Create new entity with updated texture
+      const newEntity = this._createElementEntity(element);
+      if (newEntity && this._world) {
+        newEntity.spawn(this._world, currentPosition, currentRotation);
+        element.entity = newEntity;
       }
 
       // Add animation if needed

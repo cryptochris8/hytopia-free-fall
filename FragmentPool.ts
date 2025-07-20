@@ -93,29 +93,22 @@ export class FragmentPool {
       return null;
     }
 
-    // Try to get from pool first
-    let fragment = this._pool.pop();
-    
-    // If pool is empty, create a new one
-    if (!fragment) {
-      console.warn('[FragmentPool] Pool exhausted, creating new fragment');
-      try {
-        fragment = new Entity({
-          ...this._fragmentOptions,
-          blockTextureUri: textureUri
-        });
-        fragment.spawn(this._world, position);
-      } catch (error) {
-        console.error('[FragmentPool] Failed to create/spawn fragment:', error);
-        return; // Exit early if creation fails
-      }
+    // Create a new fragment with the specified texture
+    // Note: Block textures cannot be changed after creation, so we create new fragments
+    let fragment: Entity;
+    try {
+      fragment = new Entity({
+        ...this._fragmentOptions,
+        blockTextureUri: textureUri
+      });
+      fragment.spawn(this._world, position);
+    } catch (error) {
+      console.error('[FragmentPool] Failed to create/spawn fragment:', error);
+      return null; // Return null if creation fails
     }
 
     // Configure the fragment
     try {
-      // Update texture
-      fragment.setBlockTextureUri(textureUri);
-      
       // Reset and position the fragment
       fragment.setPosition(position);
       fragment.setLinearVelocity(velocity);
