@@ -88,7 +88,7 @@ const MAX_QUESTIONS = 10; // Define the total number of questions per game
 // --- Constants ---
 
 // Game Settings
-const GAME_RESET_DELAY_MS = 200; // Delay after answer before reset/next question
+const GAME_RESET_DELAY_MS = 500; // Delay after answer before reset/next question (increased to ensure blocks clear)
 const BACKGROUND_MUSIC_DELAY_MS = 15000; // Delay before background music starts
 
 // Player Settings
@@ -404,7 +404,9 @@ class AnswerBlocksManager {
   // Method to clear existing blocks
   public clearAnswerBlocks(): void {
     console.log(`[AnswerBlocksManager] Clearing ${this._blocks.length} existing blocks.`);
-    this._blocks.forEach(block => {
+    // Create a copy of the blocks array to avoid modification during iteration
+    const blocksToRemove = [...this._blocks];
+    blocksToRemove.forEach(block => {
       if (block.isSpawned) {
         console.log(`[AnswerBlocksManager] Despawning block ID: ${block.id}`);
         block.despawn();
@@ -473,7 +475,7 @@ class AnswerBlocksManager {
                   this._world.emit('wrongAnswer', { player: player });
                 }
 
-                // Spawn break effect THEN despawn the original block
+                // Spawn break effect for the hit block
                 if (block.isSpawned) {
                   // Get current position just before despawning and explicitly cast to Vector3
                   const currentPosition = block.position as Vector3; 
@@ -484,9 +486,16 @@ class AnswerBlocksManager {
                       ANSWER_BLOCK_BREAK_FRAGMENTS,
                       ANSWER_BLOCK_BREAK_DURATION_MS
                   );
-
+                  
+                  // Despawn only the hit block
                   console.log(`[AnswerBlocksManager] Despawning block ID: ${block.id} after collision with ${player.username}.`);
                   block.despawn();
+                  
+                  // Remove from the blocks array
+                  const blockIndex = this._blocks.indexOf(block);
+                  if (blockIndex > -1) {
+                    this._blocks.splice(blockIndex, 1);
+                  }
                 }
               }
             }
@@ -1652,9 +1661,9 @@ class MathGameManager {
          break;
        case 'moderate':
          allowedOps = ['+', '-', '*'];
-         problemMaxValue = 10;
+         problemMaxValue = 5; // Reduced to keep multiplication results <= 15
          wrongAnswerRange = 5;
-         wrongAnswerMax = 100; // Increased to handle multiplication results
+         wrongAnswerMax = 15; // Cap at available texture range
          break;
        case 'hard':
        default:
@@ -1693,16 +1702,30 @@ class MathGameManager {
               isValid = true;
               break;
           case '*': // Only available for Moderate and Hard
-              num1 = Math.floor(Math.random() * (problemMaxValue + 1)); 
-              if (num1 === 0) {
-                  // Allow num2 to be anything up to max if num1 is 0
-                  num2 = Math.floor(Math.random() * (problemMaxValue + 1)); 
+              // For moderate difficulty, ensure multiplication results stay within texture range
+              if (difficulty === 'moderate') {
+                  // Keep it simple: use smaller numbers for multiplication
+                  num1 = Math.floor(Math.random() * 4) + 1; // 1-3
+                  num2 = Math.floor(Math.random() * 6); // 0-5
+                  answer = num1 * num2;
+                  // Ensure answer doesn't exceed 15
+                  if (answer > 15) {
+                      num2 = Math.floor(15 / num1);
+                      answer = num1 * num2;
+                  }
               } else {
-                  // Ensure answer doesn't exceed maxProblemValue
-                  const maxNum2 = Math.floor(problemMaxValue / num1);
-                  num2 = Math.floor(Math.random() * (maxNum2 + 1)); 
+                  // Original logic for hard mode
+                  num1 = Math.floor(Math.random() * (problemMaxValue + 1)); 
+                  if (num1 === 0) {
+                      // Allow num2 to be anything up to max if num1 is 0
+                      num2 = Math.floor(Math.random() * (problemMaxValue + 1)); 
+                  } else {
+                      // Ensure answer doesn't exceed maxProblemValue
+                      const maxNum2 = Math.floor(problemMaxValue / num1);
+                      num2 = Math.floor(Math.random() * (maxNum2 + 1)); 
+                  }
+                  answer = num1 * num2;
               }
-              answer = num1 * num2;
               isValid = true;
               break;
           case '/': // Only available for Hard
