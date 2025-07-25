@@ -55,6 +55,13 @@ and also configure additional buttons for mobile compatibility.
   <div id="powerup-indicators" class="powerup-indicators">
     <!-- Power-ups will be dynamically added here -->
   </div>
+  
+  <!-- Rewind Power-up Button -->
+  <div id="rewind-button" class="rewind-button" style="display: none;">
+    <span class="rewind-icon">⏪</span>
+    <span class="rewind-text">REWIND</span>
+    <span class="rewind-count">0</span>
+  </div>
 </div>
 
 <!-- End Screen -->
@@ -651,6 +658,80 @@ and also configure additional buttons for mobile compatibility.
   .powerup-magnet { border-color: #c864ff; color: #c864ff; }
   .powerup-doublepoints { border-color: #ffd700; color: #ffd700; }
   .powerup-rewind { border-color: #50ff50; color: #50ff50; }
+  
+  /* Rewind Button Styles */
+  .rewind-button {
+    position: absolute;
+    bottom: 100px;
+    right: 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 3px solid #50ff50;
+    border-radius: 15px;
+    padding: 15px 25px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Minecraft', monospace;
+    color: #50ff50;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(80, 255, 80, 0.3);
+    transition: all 0.3s ease;
+    user-select: none;
+  }
+  
+  .rewind-button:hover {
+    background-color: rgba(80, 255, 80, 0.2);
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(80, 255, 80, 0.5);
+  }
+  
+  .rewind-button:active {
+    transform: scale(0.95);
+  }
+  
+  .rewind-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #666;
+    color: #666;
+  }
+  
+  .rewind-button.disabled:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .rewind-icon {
+    font-size: 24px;
+  }
+  
+  .rewind-text {
+    font-size: 18px;
+    text-transform: uppercase;
+  }
+  
+  .rewind-count {
+    background-color: rgba(80, 255, 80, 0.3);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  
+  @keyframes rewind-pulse {
+    0% { box-shadow: 0 4px 10px rgba(80, 255, 80, 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(80, 255, 80, 0.8); }
+    100% { box-shadow: 0 4px 10px rgba(80, 255, 80, 0.3); }
+  }
+  
+  .rewind-button.available {
+    animation: rewind-pulse 2s infinite;
+  }
 
   @keyframes powerup-appear {
     from {
@@ -1787,6 +1868,10 @@ and also configure additional buttons for mobile compatibility.
       // Handle power-up events
       if (data.type === 'power-up-collected') {
         addPowerUpIndicator(data.powerUp);
+        // Special handling for rewind power-up
+        if (data.powerUp.name === 'Rewind') {
+          updateRewindButton(data.powerUp.uses);
+        }
       }
 
       if (data.type === 'power-up-activated') {
@@ -1799,6 +1884,7 @@ and also configure additional buttons for mobile compatibility.
 
       if (data.type === 'rewind-used') {
         updateRewindUses(data.remainingUses);
+        updateRewindButton(data.remainingUses);
         // Update score display if needed
         if (finalScoreDisplay && data.newScore !== undefined) {
           // Find score display in game HUD and update if it exists
@@ -1968,6 +2054,55 @@ and also configure additional buttons for mobile compatibility.
       }, 100);
 
       activePowerUps.set(powerUpName, active);
+    }
+    
+    // --- Rewind Button Functions ---
+    const rewindButton = document.getElementById('rewind-button');
+    let rewindUsesAvailable = 0;
+    
+    function updateRewindButton(uses) {
+      if (!rewindButton) return;
+      
+      rewindUsesAvailable = uses;
+      const countElement = rewindButton.querySelector('.rewind-count');
+      if (countElement) {
+        countElement.textContent = uses;
+      }
+      
+      if (uses > 0) {
+        rewindButton.style.display = 'flex';
+        rewindButton.classList.add('available');
+        rewindButton.classList.remove('disabled');
+      } else {
+        rewindButton.style.display = 'none';
+        rewindButton.classList.remove('available');
+        rewindButton.classList.add('disabled');
+      }
+    }
+    
+    // Setup rewind button click handler
+    if (rewindButton) {
+      rewindButton.addEventListener('click', () => {
+        if (rewindUsesAvailable > 0 && !rewindButton.classList.contains('disabled')) {
+          // Send rewind request to server
+          hytopia.sendData({ 
+            type: 'use-rewind'
+          });
+          console.log('[UI] Rewind button clicked');
+        }
+      });
+      
+      // Add keyboard shortcut (R key)
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'r' || e.key === 'R') {
+          if (rewindUsesAvailable > 0 && gameScreen.style.display === 'block') {
+            hytopia.sendData({ 
+              type: 'use-rewind'
+            });
+            console.log('[UI] Rewind activated via R key');
+          }
+        }
+      });
     }
 
     // --- Mobile Controls ---

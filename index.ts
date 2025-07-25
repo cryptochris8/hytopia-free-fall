@@ -988,6 +988,24 @@ class MathGameManager {
           this.generateNewProblem(player); // Pass player to generate problem
           this._playBackgroundMusic();
           this._landingPlatformManager.cleanup();
+        } else if (data.type === 'use-rewind') {
+          console.log(`[MathGameManager] Rewind requested by ${player.username}`);
+          
+          // Import and use the rewind functionality
+          const { RewindPowerUp } = require('./powerups/RewindPowerUp');
+          const success = RewindPowerUp.useRewind(player.username);
+          
+          if (success) {
+            console.log(`[MathGameManager] Rewind successful for ${player.username}`);
+            // The RewindPowerUp.useRewind() method handles UI updates internally
+          } else {
+            console.log(`[MathGameManager] Rewind failed for ${player.username} - no uses available or no recent wrong answer`);
+            // Send error message to UI
+            player.ui.sendData({
+              type: 'rewind-failed',
+              message: 'Cannot rewind - no recent wrong answer or no uses available'
+            });
+          }
         } else if (data.type === 'restart-game') {
           console.log(`[MathGameManager] Restart game requested by ${player.username}`);
           playerState.score = 0;

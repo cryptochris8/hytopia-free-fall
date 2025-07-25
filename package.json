@@ -14,8 +14,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@hytopia.com/assets": "^0.3.14",
-    "hytopia": "^0.7.5",
+    "@hytopia.com/assets": "^0.3.15",
+    "hytopia": "^0.7.11",
     "mediasoup": "^3.16.6"
   },
   "trustedDependencies": [
