@@ -934,9 +934,9 @@ class MathGameManager {
       console.log(`[MathGameManager] Initialized game state for ${player.username}`);
       
       // Initialize Phase 2 systems for player
-      CurriculumSystem.getInstance().initializePlayerProgress(player.id);
-      LearningAnalyticsDashboard.getInstance().startSession(player.id);
-      AchievementSystem.getInstance().initializePlayerProgress(player.id);
+      CurriculumSystem.getInstance().initializePlayerProgress(player);
+      LearningAnalyticsDashboard.getInstance().startSession(player);
+      AchievementSystem.getInstance().initializePlayerProgress(player);
       AdaptiveDifficultySystem.getInstance().initializePlayerParameters(player.id);
       ProgressVisualizationSystem.getInstance().initializePlayerVisualization(player.id);
       
@@ -1111,7 +1111,7 @@ class MathGameManager {
       ParticleTrailSystem.getInstance().stopTrail(player.username);
       
       // Clean up Phase 2 systems
-      LearningAnalyticsDashboard.getInstance().endSession(player.id);
+      LearningAnalyticsDashboard.getInstance().endSession(player);
       ProgressVisualizationSystem.getInstance().cleanupPlayerVisualization(player.id);
       console.log(`[MathGameManager] Cleaned up Phase 2 systems for ${player.username}.`);
       
@@ -1172,7 +1172,7 @@ class MathGameManager {
         const currentQuestion = this._answerBlocksManager.getCurrentQuestion();
         if (currentQuestion) {
           // Record curriculum progress
-          CurriculumSystem.getInstance().recordAnswer(player.id, currentQuestion.id || 'unknown', currentQuestion.answer, 1000);
+          CurriculumSystem.getInstance().recordAnswer(player, currentQuestion.id || 'unknown', currentQuestion.answer, 1000);
           
           // Record analytics
           LearningAnalyticsDashboard.getInstance().recordQuestionAttempt(player.id, currentQuestion.topic || 'basic_arithmetic', true, 1000);
@@ -1655,8 +1655,8 @@ class MathGameManager {
          }
        }
        
-       // Record session activity
-       AchievementSystem.getInstance().recordAction(player.id, 'question_answered');
+             // Record session activity
+      AchievementSystem.getInstance().recordAction(player, 'question_answered');
        
        return;
      }

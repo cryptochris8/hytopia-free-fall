@@ -3,7 +3,6 @@ This is a basic boilerplate example of how to implement simple game UI,
 and also configure additional buttons for mobile compatibility.
 -->
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
 <!--
   HYTOPIA allows you to build completely custom UI using HTML, CSS and Javascript.
@@ -309,16 +308,7 @@ and also configure additional buttons for mobile compatibility.
     <div class="dir-cell"></div>
   </div>
 
-  <!-- Action buttons -->
-  <div class="mobile-action-buttons">
-    <a id="mobile-interact-button" class="mobile-button">
-      <img src="{{CDN_ASSETS_URL}}/icons/target.png" />
-    </a>
-
-    <a id="mobile-jump-button" class="mobile-button">
-      <img src="{{CDN_ASSETS_URL}}/icons/jump.png" />
-    </a>
-  </div>
+  <!-- Action buttons removed - not needed for Free Fall game -->
   
   <!-- Look Down Button (Centered) -->
   <div class="mobile-look-down-container">
@@ -336,8 +326,9 @@ and also configure additional buttons for mobile compatibility.
   }
 
   /*
-    We can use the body.mobile class to detect if we're on a mobile device.
-    The HYTOPIA game client will always add this class to the body element when running on a mobile device.
+    Mobile controls are shown based on device detection.
+    The game uses a custom detector UI to determine device type and loads appropriate UI.
+    Mobile controls are enabled through CSS when needed.
   */
   body.mobile .mobile-controls { /* If this css selector matches because we're on mobile, show the mobile controls */
     display: flex;
@@ -351,15 +342,7 @@ and also configure additional buttons for mobile compatibility.
     pointer-events: none; /* Allow clicks to pass through container */
   }
 
-  /* Mobile action buttons container (right side) */
-  .mobile-action-buttons {
-    display: flex;
-    gap: 14px;
-    position: fixed;
-    bottom: 40px;
-    right: 40px;
-    pointer-events: auto; /* Enable interaction with buttons */
-  }
+  /* Mobile action buttons removed - not needed for Free Fall game */
 
   /* Mobile Look Down Button (center bottom) */
   .mobile-look-down-container {
@@ -1486,8 +1469,6 @@ and also configure additional buttons for mobile compatibility.
     const finalScoreDisplay = document.getElementById('final-score');
 
     // Get references to mobile control buttons
-    const mobileInteractButton = document.getElementById('mobile-interact-button');
-    const mobileJumpButton = document.getElementById('mobile-jump-button');
     const mobileUpButton = document.getElementById('mobile-up');
     const mobileLeftButton = document.getElementById('mobile-left');
     const mobileRightButton = document.getElementById('mobile-right');
@@ -1504,7 +1485,7 @@ and also configure additional buttons for mobile compatibility.
     }
     
     // Check mobile controls
-    if (!mobileInteractButton || !mobileJumpButton || !mobileUpButton || !mobileLeftButton || !mobileRightButton || !mobileDownButton) {
+    if (!mobileUpButton || !mobileLeftButton || !mobileRightButton || !mobileDownButton) {
       console.error('[UI Error] One or more mobile control elements not found!');
       return;
     }
@@ -1534,7 +1515,7 @@ and also configure additional buttons for mobile compatibility.
       showScreen(gameHud);
       // Play start game sound
       try {
-        const startSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/start-game.mp3';
+        const startSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/button-click.mp3';
         const startSound = new Audio(startSoundPath);
         startSound.play().catch(error => {
           console.warn('Could not autoplay start game sound:', error);
@@ -2140,10 +2121,6 @@ and also configure additional buttons for mobile compatibility.
     setupMobileTouchControl(mobileLeftButton, 'a', 'left');
     setupMobileTouchControl(mobileDownButton, 's', 'down');
     setupMobileTouchControl(mobileRightButton, 'd', 'right');
-    
-    // Set up action buttons
-    setupMobileTouchControl(mobileInteractButton, 'ml', 'interact');
-    setupMobileTouchControl(mobileJumpButton, ' ', 'jump');
 
     // Set up look down button - Force camera to look down
     const mobileLookDownButton = document.getElementById('mobile-look-down');

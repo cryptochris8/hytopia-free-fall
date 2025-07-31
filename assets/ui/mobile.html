@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <div id="mobile-app" class="mobile-app">
   <!-- Start Screen -->
   <div id="start-screen" class="screen active">
@@ -426,7 +425,7 @@
       
       // Play start game sound
       try {
-        const startSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/start-game.mp3';
+        const startSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/button-click.mp3';
         const startSound = new Audio(startSoundPath);
         startSound.play().catch(error => {
           console.warn('Could not autoplay start game sound:', error);

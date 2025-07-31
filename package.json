@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@hytopia.com/assets": "^0.3.15",
-    "hytopia": "^0.7.11",
-    "mediasoup": "^3.16.6"
+    "hytopia": "^0.7.14",
+    "mediasoup": "^3.17.1"
   },
   "trustedDependencies": [
     "mediasoup"
