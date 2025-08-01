@@ -420,18 +420,29 @@
   if (startButton) {
     startButton.addEventListener('click', () => {
       console.log('Start Game button clicked');
-      hytopia.sendData({ type: 'start-game' });
-      showScreen(gameHud);
       
-      // Play start game sound
+      // Play start game sound and ensure audio context is active
       try {
         const startSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/button-click.mp3';
         const startSound = new Audio(startSoundPath);
-        startSound.play().catch(error => {
-          console.warn('Could not autoplay start game sound:', error);
+        
+        // Play the button click sound
+        startSound.play().then(() => {
+          console.log('Button click sound played successfully');
+          // Send start game message after audio context is confirmed active
+          hytopia.sendData({ type: 'start-game' });
+          showScreen(gameHud);
+        }).catch(error => {
+          console.warn('Could not play start game sound:', error);
+          // Still start the game even if sound fails
+          hytopia.sendData({ type: 'start-game' });
+          showScreen(gameHud);
         });
       } catch (error) {
         console.error('Error creating or playing start game sound:', error);
+        // Still start the game even if sound creation fails
+        hytopia.sendData({ type: 'start-game' });
+        showScreen(gameHud);
       }
     });
   }
@@ -456,11 +467,25 @@
   try {
     const welcomeSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/opening-voice.mp3';
     const welcomeSound = new Audio(welcomeSoundPath);
-    welcomeSound.play().catch(error => {
+    
+    // Track when opening voice ends
+    welcomeSound.addEventListener('ended', () => {
+      console.log('Opening voice finished playing');
+      // Store flag that opening voice has completed
+      window.openingVoiceCompleted = true;
+    });
+    
+    welcomeSound.play().then(() => {
+      console.log('Opening voice started playing');
+    }).catch(error => {
       console.warn('Could not autoplay welcome sound:', error);
+      // Mark as completed even if it couldn't play
+      window.openingVoiceCompleted = true;
     });
   } catch (error) {
     console.error('Error creating or playing welcome sound:', error);
+    // Mark as completed even if there was an error
+    window.openingVoiceCompleted = true;
   }
 
   // Initialize with start screen

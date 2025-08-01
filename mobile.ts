@@ -367,6 +367,7 @@ class MathGameManager {
   private _answerBlocksManager: AnswerBlocksManager;
   private _backgroundMusic: Audio | null = null;
   private _isMusicPlaying: boolean = false;
+  private _musicStartTimer: NodeJS.Timeout | null = null;
 
   constructor(private _world: World, backgroundMusic: Audio) {
     this._answerBlocksManager = new AnswerBlocksManager(_world);
@@ -558,6 +559,8 @@ class MathGameManager {
         playerData.controller.resetFallState();
 
         this.generateNewProblem(player);
+        
+        // Start background music with delay for mobile compatibility
         this._playBackgroundMusic();
       } else if (data.type === 'restart-game') {
         console.log(`[MathGameManager] Restart game requested by ${player.username}`);
@@ -926,18 +929,29 @@ class MathGameManager {
 
   /**
    * Play background music if not already playing.
+   * Adds a delay to ensure music starts after the opening voice on mobile.
    */
   private _playBackgroundMusic(): void {
-    if (this._backgroundMusic && !this._isMusicPlaying) {
-      try {
-        this._backgroundMusic.play(this._world, true);
-        this._isMusicPlaying = true;
-        console.log('[MathGameManager] Background music started (forced).');
-      } catch (error) {
-        console.error('[MathGameManager] Error playing background music:', error);
-      }
+    if (this._backgroundMusic && !this._isMusicPlaying && !this._musicStartTimer) {
+      console.log('[MathGameManager] Scheduling background music to start after delay for mobile compatibility...');
+      
+      // Add delay to allow opening voice to finish and respect mobile audio policies
+      this._musicStartTimer = setTimeout(() => {
+        try {
+          if (this._backgroundMusic && !this._isMusicPlaying) {
+            this._backgroundMusic.play(this._world, true);
+            this._isMusicPlaying = true;
+            console.log('[MathGameManager] Background music started after delay (mobile-friendly).');
+          }
+        } catch (error) {
+          console.error('[MathGameManager] Error playing background music:', error);
+        }
+        this._musicStartTimer = null;
+      }, 4000); // 4 second delay to allow opening voice to finish and respect mobile audio policies
     } else if (this._isMusicPlaying) {
-      // Music already playing
+      console.log('[MathGameManager] Background music already playing.');
+    } else if (this._musicStartTimer) {
+      console.log('[MathGameManager] Background music start already scheduled.');
     } else {
       console.error('[MathGameManager] Background music object is missing, cannot play.');
     }
@@ -947,6 +961,13 @@ class MathGameManager {
    * Stop background music if it is playing.
    */
   private _stopBackgroundMusic(): void {
+    // Clear any pending music start timer
+    if (this._musicStartTimer) {
+      clearTimeout(this._musicStartTimer);
+      this._musicStartTimer = null;
+      console.log('[MathGameManager] Cancelled scheduled background music start.');
+    }
+    
     if (this._backgroundMusic && this._isMusicPlaying) {
       try {
         this._backgroundMusic.pause();
