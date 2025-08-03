@@ -87,6 +87,7 @@ const ANSWER_BLOCK_BREAK_ANGULAR_SPEED = 2.0;
 const ANSWER_BLOCK_BREAK_FRAGMENT_HALF_EXTENTS: Vector3Like = { x: 0.15, y: 0.15, z: 0.15 };
 const ANSWER_BLOCK_BREAK_FRAGMENT_GRAVITY = 0.8;
 const FALL_THRESHOLD_Y = ANSWER_BLOCK_Y_POSITION - 5;
+const FALL_RESET_Y = ANSWER_BLOCK_Y_POSITION - 20; // Safety reset point if player falls too far
 
 // Math problem settings
 const MATH_PROBLEM_MAX_VALUE = 15;
@@ -173,6 +174,23 @@ class FallingPlayerController extends BaseEntityController {
         console.log(`[FallingPlayerController] Player ${player.username} fell below threshold Y=${FALL_THRESHOLD_Y}. Emitting wrongAnswer.`);
         this._world.emit('wrongAnswer', { player: player });
         this.hasFallen = true;
+      }
+    }
+    
+    // Safety check: if player falls too far, force a reset
+    if (currentPos.y < FALL_RESET_Y && this.hasFallen) {
+      const player = entity.player;
+      const playerState = playerGameStateMap.get(player.username);
+      
+      if (playerState && playerState.gameActive) {
+        console.log(`[FallingPlayerController] Player ${player.username} fell too far (Y=${currentPos.y}), forcing position reset.`);
+        // Immediately reset position to prevent infinite falling
+        try {
+          entity.setPosition(PLAYER_SPAWN_POSITION);
+          this.hasFallen = false;
+        } catch (error) {
+          console.error(`[FallingPlayerController] Error resetting player position:`, error);
+        }
       }
     }
 
@@ -547,7 +565,10 @@ class MathGameManager {
         return;
       }
 
-      if (data.type === 'start-game') {
+      if (data.type === 'audio-activated') {
+        console.log(`[MathGameManager] Audio activated signal received from ${player.username}`);
+        // This signal indicates the client's audio context is active
+      } else if (data.type === 'start-game') {
         console.log(`[MathGameManager] Start game requested by ${player.username}`);
         playerState.score = 0;
         playerState.questionsPresented = 0;
@@ -668,8 +689,8 @@ class MathGameManager {
 
         this._answerBlocksManager.clearAnswerBlocks();
       } else {
-        // Reset for next question
-        playerEntity.setPosition(PLAYER_RESET_POSITION);
+        // Reset for next question - spawn player back at top
+        playerEntity.setPosition(PLAYER_SPAWN_POSITION);
         controller.resetFallState();
         this.generateNewProblem(player);
       }
@@ -735,8 +756,8 @@ class MathGameManager {
 
         this._answerBlocksManager.clearAnswerBlocks();
       } else {
-        // Reset for next question
-        playerEntity.setPosition(PLAYER_RESET_POSITION);
+        // Reset for next question - spawn player back at top
+        playerEntity.setPosition(PLAYER_SPAWN_POSITION);
         controller.resetFallState();
         this.generateNewProblem(player);
       }

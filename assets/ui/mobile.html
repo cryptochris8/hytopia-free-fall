@@ -359,6 +359,11 @@
         e.preventDefault(); // Prevent default behavior
         element.classList.add('active');
         hytopia.pressInput(key, true);
+        
+        // Ensure audio is activated on first D-pad use
+        if (!audioActivated) {
+          handleFirstTouch();
+        }
       }, { passive: false });
       
       // Touch end - release the key
@@ -426,20 +431,34 @@
         const startSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/button-click.mp3';
         const startSound = new Audio(startSoundPath);
         
-        // Play the button click sound
-        startSound.play().then(() => {
-          console.log('Button click sound played successfully');
-          // Send start game message after audio context is confirmed active
+        // Create a silent audio element to activate audio context for server sounds
+        const silentAudio = new Audio();
+        silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAAAAAAAAAAAAAAAAAAAAAZGF0YQQAAAAA';
+        silentAudio.volume = 0.1;
+        
+        // Play both sounds to ensure audio context is fully activated
+        Promise.all([
+          startSound.play().catch(e => console.warn('Start sound play failed:', e)),
+          silentAudio.play().catch(e => console.warn('Silent audio play failed:', e))
+        ]).then(() => {
+          console.log('Audio context activated, sounds played successfully');
+          // Ensure audio context is activated
+          activateAudioContext();
+          // Send audio activation signal to server
+          hytopia.sendData({ type: 'audio-activated' });
+          // Send start game message
           hytopia.sendData({ type: 'start-game' });
           showScreen(gameHud);
         }).catch(error => {
-          console.warn('Could not play start game sound:', error);
-          // Still start the game even if sound fails
+          console.warn('Audio activation had issues:', error);
+          // Still try to activate audio context
+          activateAudioContext();
+          // Still start the game even if audio activation fails
           hytopia.sendData({ type: 'start-game' });
           showScreen(gameHud);
         });
       } catch (error) {
-        console.error('Error creating or playing start game sound:', error);
+        console.error('Error creating or playing sounds:', error);
         // Still start the game even if sound creation fails
         hytopia.sendData({ type: 'start-game' });
         showScreen(gameHud);
@@ -460,6 +479,35 @@
     });
   }
 
+  // Audio activation helper function
+  function activateAudioContext() {
+    // Try to resume Web Audio API context if it exists
+    if (window.AudioContext || window.webkitAudioContext) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContextClass();
+      
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          console.log('Web Audio API context resumed successfully');
+        }).catch(err => {
+          console.warn('Failed to resume audio context:', err);
+        });
+      }
+    }
+    
+    // Also activate Hytopia's audio system if available
+    if (window.hytopia && window.hytopia.audio) {
+      if (typeof window.hytopia.audio.enable === 'function') {
+        window.hytopia.audio.enable();
+        console.log('Hytopia audio system enabled');
+      }
+      if (typeof window.hytopia.audio.activate === 'function') {
+        window.hytopia.audio.activate();
+        console.log('Hytopia audio system activated');
+      }
+    }
+  }
+
   // Initialize D-Pad controls
   setupDpadControls();
 
@@ -477,6 +525,8 @@
     
     welcomeSound.play().then(() => {
       console.log('Opening voice started playing');
+      // Activate audio context when first sound plays
+      activateAudioContext();
     }).catch(error => {
       console.warn('Could not autoplay welcome sound:', error);
       // Mark as completed even if it couldn't play
@@ -487,6 +537,34 @@
     // Mark as completed even if there was an error
     window.openingVoiceCompleted = true;
   }
+
+  // Add a one-time touch handler to activate audio on first user interaction
+  let audioActivated = false;
+  function handleFirstTouch() {
+    if (!audioActivated) {
+      audioActivated = true;
+      console.log('First touch detected, activating audio context');
+      activateAudioContext();
+      
+      // Try to play a silent sound to fully activate audio
+      try {
+        const silentAudio = new Audio();
+        silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAAAAAAAAAAAAAAAAAAAAAZGF0YQQAAAAA';
+        silentAudio.volume = 0.01;
+        silentAudio.play().catch(e => console.log('Silent audio play on touch failed:', e));
+      } catch (e) {
+        console.log('Could not create silent audio on touch:', e);
+      }
+      
+      // Remove the listener after first activation
+      document.removeEventListener('touchstart', handleFirstTouch);
+      document.removeEventListener('click', handleFirstTouch);
+    }
+  }
+  
+  // Add listeners for first user interaction
+  document.addEventListener('touchstart', handleFirstTouch, { passive: true });
+  document.addEventListener('click', handleFirstTouch, { passive: true });
 
   // Initialize with start screen
   showScreen(startScreen);
