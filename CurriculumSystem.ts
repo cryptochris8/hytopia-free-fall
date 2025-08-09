@@ -278,21 +278,57 @@ export class CurriculumSystem {
    * Initialize question bank
    */
   private _initializeQuestionBank(): void {
-    // Basic Arithmetic Questions
+    // Basic Arithmetic Questions (All answers 0-15 to match available blocks)
     this._addQuestionsToBank(MathTopic.BASIC_ARITHMETIC, [
-      // Grade 1 - Simple addition
+      // Grade 1 - Addition (0-15 range)
       { id: 'arith_1_1', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '3 + 2 = ?', correctAnswer: 5, wrongAnswers: [3, 4, 6], grade: 1 },
-      { id: 'arith_1_2', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '7 - 3 = ?', correctAnswer: 4, wrongAnswers: [3, 5, 10], grade: 1 },
-      { id: 'arith_1_3', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '5 + 4 = ?', correctAnswer: 9, wrongAnswers: [8, 10, 1], grade: 1 },
+      { id: 'arith_1_2', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '7 + 3 = ?', correctAnswer: 10, wrongAnswers: [8, 9, 11], grade: 1 },
+      { id: 'arith_1_3', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '5 + 4 = ?', correctAnswer: 9, wrongAnswers: [8, 10, 7], grade: 1 },
+      { id: 'arith_1_4', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '6 + 7 = ?', correctAnswer: 13, wrongAnswers: [12, 14, 15], grade: 1 },
+      { id: 'arith_1_5', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '8 + 5 = ?', correctAnswer: 13, wrongAnswers: [11, 12, 14], grade: 1 },
+      { id: 'arith_1_6', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '9 + 6 = ?', correctAnswer: 15, wrongAnswers: [13, 14, 12], grade: 1 },
       
-      // Grade 3 - Multiplication
-      { id: 'arith_3_1', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '6 × 4 = ?', correctAnswer: 24, wrongAnswers: [20, 28, 26], grade: 3 },
-      { id: 'arith_3_2', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '35 ÷ 5 = ?', correctAnswer: 7, wrongAnswers: [5, 8, 6], grade: 3 },
-      { id: 'arith_3_3', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '8 × 7 = ?', correctAnswer: 56, wrongAnswers: [54, 58, 49], grade: 3 },
+      // Grade 1 - Subtraction (0-15 range)
+      { id: 'arith_1_7', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '7 - 3 = ?', correctAnswer: 4, wrongAnswers: [3, 5, 2], grade: 1 },
+      { id: 'arith_1_8', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '10 - 4 = ?', correctAnswer: 6, wrongAnswers: [5, 7, 8], grade: 1 },
+      { id: 'arith_1_9', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '12 - 8 = ?', correctAnswer: 4, wrongAnswers: [3, 5, 6], grade: 1 },
+      { id: 'arith_1_10', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '15 - 7 = ?', correctAnswer: 8, wrongAnswers: [7, 9, 6], grade: 1 },
+      { id: 'arith_1_11', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '11 - 5 = ?', correctAnswer: 6, wrongAnswers: [5, 7, 4], grade: 1 },
+      { id: 'arith_1_12', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '14 - 9 = ?', correctAnswer: 5, wrongAnswers: [4, 6, 3], grade: 1 },
       
-      // Grade 5 - Advanced arithmetic
-      { id: 'arith_5_1', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.ADVANCED, question: '144 ÷ 12 = ?', correctAnswer: 12, wrongAnswers: [11, 13, 14], grade: 5 },
-      { id: 'arith_5_2', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.ADVANCED, question: '25 × 16 = ?', correctAnswer: 400, wrongAnswers: [350, 450, 375], grade: 5 },
+      // Grade 1 - Simple multiplication (0-15 range)
+      { id: 'arith_1_13', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '3 × 2 = ?', correctAnswer: 6, wrongAnswers: [5, 7, 4], grade: 1 },
+      { id: 'arith_1_14', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '4 × 3 = ?', correctAnswer: 12, wrongAnswers: [11, 13, 10], grade: 1 },
+      { id: 'arith_1_15', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '5 × 2 = ?', correctAnswer: 10, wrongAnswers: [8, 9, 11], grade: 1 },
+      { id: 'arith_1_16', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '3 × 4 = ?', correctAnswer: 12, wrongAnswers: [10, 14, 15], grade: 1 },
+      { id: 'arith_1_17', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '2 × 7 = ?', correctAnswer: 14, wrongAnswers: [12, 13, 15], grade: 1 },
+      { id: 'arith_1_18', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '3 × 5 = ?', correctAnswer: 15, wrongAnswers: [13, 14, 12], grade: 1 },
+      
+      // Grade 1 - Simple division (0-15 range)
+      { id: 'arith_1_19', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '6 ÷ 2 = ?', correctAnswer: 3, wrongAnswers: [2, 4, 5], grade: 1 },
+      { id: 'arith_1_20', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '8 ÷ 4 = ?', correctAnswer: 2, wrongAnswers: [1, 3, 4], grade: 1 },
+      { id: 'arith_1_21', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '12 ÷ 3 = ?', correctAnswer: 4, wrongAnswers: [3, 5, 6], grade: 1 },
+      { id: 'arith_1_22', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '15 ÷ 5 = ?', correctAnswer: 3, wrongAnswers: [2, 4, 5], grade: 1 },
+      { id: 'arith_1_23', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '10 ÷ 2 = ?', correctAnswer: 5, wrongAnswers: [4, 6, 3], grade: 1 },
+      { id: 'arith_1_24', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.BEGINNER, question: '14 ÷ 7 = ?', correctAnswer: 2, wrongAnswers: [1, 3, 4], grade: 1 },
+      
+      // Grade 3 - Mixed operations (0-15 range)
+      { id: 'arith_3_1', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '2 × 6 = ?', correctAnswer: 12, wrongAnswers: [10, 14, 11], grade: 3 },
+      { id: 'arith_3_2', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '9 ÷ 3 = ?', correctAnswer: 3, wrongAnswers: [2, 4, 6], grade: 3 },
+      { id: 'arith_3_3', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '3 × 5 = ?', correctAnswer: 15, wrongAnswers: [12, 13, 14], grade: 3 },
+      { id: 'arith_3_4', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '15 ÷ 3 = ?', correctAnswer: 5, wrongAnswers: [4, 6, 3], grade: 3 },
+      { id: 'arith_3_5', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '7 + 8 = ?', correctAnswer: 15, wrongAnswers: [13, 14, 12], grade: 3 },
+      { id: 'arith_3_6', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '15 - 9 = ?', correctAnswer: 6, wrongAnswers: [5, 7, 8], grade: 3 },
+      { id: 'arith_3_7', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '4 × 3 = ?', correctAnswer: 12, wrongAnswers: [10, 11, 14], grade: 3 },
+      { id: 'arith_3_8', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.INTERMEDIATE, question: '14 ÷ 2 = ?', correctAnswer: 7, wrongAnswers: [6, 8, 5], grade: 3 },
+      
+      // Grade 5 - Advanced arithmetic (0-15 range only)
+      { id: 'arith_5_1', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.ADVANCED, question: '15 ÷ 5 = ?', correctAnswer: 3, wrongAnswers: [2, 4, 5], grade: 5 },
+      { id: 'arith_5_2', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.ADVANCED, question: '4 × 3 + 2 = ?', correctAnswer: 14, wrongAnswers: [12, 13, 15], grade: 5 },
+      { id: 'arith_5_3', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.ADVANCED, question: '15 - 7 = ?', correctAnswer: 8, wrongAnswers: [7, 9, 6], grade: 5 },
+      { id: 'arith_5_4', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.ADVANCED, question: '2 × 7 = ?', correctAnswer: 14, wrongAnswers: [12, 13, 15], grade: 5 },
+      { id: 'arith_5_5', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.ADVANCED, question: '12 ÷ 4 = ?', correctAnswer: 3, wrongAnswers: [2, 4, 6], grade: 5 },
+      { id: 'arith_5_6', topic: MathTopic.BASIC_ARITHMETIC, difficulty: DifficultyLevel.ADVANCED, question: '5 × 3 = ?', correctAnswer: 15, wrongAnswers: [12, 13, 14], grade: 5 },
     ]);
 
     // Fractions Questions
