@@ -13,7 +13,9 @@ import type { PlayerEntity } from 'hytopia';
 export interface PowerUpOptions {
   name: string;
   duration: number; // Duration in milliseconds
-  textureUri: string;
+  textureUri?: string; // For block-based power-ups
+  modelUri?: string; // For model-based power-ups (icons/3D models)
+  modelScale?: number; // Scale for model-based power-ups
   pickupSoundUri?: string;
   activateSoundUri?: string;
   deactivateSoundUri?: string;
@@ -36,9 +38,8 @@ export abstract class PowerUpEntity extends Entity {
   private timeElapsed: number = 0;
 
   constructor(options: PowerUpOptions) {
-    super({
-      blockTextureUri: options.textureUri,
-      blockHalfExtents: { x: 0.4, y: 0.4, z: 0.4 },
+    // Create entity configuration based on whether we're using a model or block texture
+    const entityConfig: any = {
       rigidBodyOptions: {
         type: RigidBodyType.KINEMATIC_POSITION,
         colliders: [{
@@ -52,7 +53,20 @@ export abstract class PowerUpEntity extends Entity {
           }
         }]
       }
-    });
+    };
+
+    // Use either model or block texture
+    if (options.modelUri) {
+      entityConfig.modelUri = options.modelUri;
+      entityConfig.modelScale = options.modelScale || 1.0;
+    } else if (options.textureUri) {
+      entityConfig.blockTextureUri = options.textureUri;
+      entityConfig.blockHalfExtents = { x: 0.4, y: 0.4, z: 0.4 };
+    } else {
+      throw new Error('PowerUpOptions must specify either textureUri or modelUri');
+    }
+
+    super(entityConfig);
 
     this.name = options.name;
     this.duration = options.duration;

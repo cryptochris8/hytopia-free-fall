@@ -11,7 +11,8 @@ export class MagnetModePowerUp extends PowerUpEntity {
     const options: PowerUpOptions = {
       name: 'Magnet Mode',
       duration: MAGNET_DURATION,
-      textureUri: 'blocks/iron-ore.png', // Using iron for magnetic effect
+      modelUri: 'models/items/iron-nugget.gltf', // Using iron nugget as a magnet-like object
+      modelScale: 0.8,
       pickupSoundUri: 'audio/sfx/power-up.wav',
       activateSoundUri: 'audio/sfx/correct.mp3',
       deactivateSoundUri: 'audio/sfx/ui/notification-1.mp3',

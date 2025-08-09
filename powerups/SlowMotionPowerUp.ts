@@ -10,7 +10,8 @@ export class SlowMotionPowerUp extends PowerUpEntity {
     const options: PowerUpOptions = {
       name: 'Slow Motion',
       duration: SLOW_MOTION_DURATION,
-      textureUri: 'blocks/ice.png', // Using ice texture for slow effect
+      modelUri: 'models/items/snowball.gltf', // Using snowball for slow/cold effect
+      modelScale: 0.7,
       pickupSoundUri: 'audio/sfx/power-up.wav',
       activateSoundUri: 'audio/sfx/correct.mp3',
       deactivateSoundUri: 'audio/sfx/ui/notification-1.mp3',

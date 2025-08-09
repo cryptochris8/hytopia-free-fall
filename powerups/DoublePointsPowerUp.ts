@@ -10,7 +10,8 @@ export class DoublePointsPowerUp extends PowerUpEntity {
     const options: PowerUpOptions = {
       name: 'Double Points',
       duration: DOUBLE_POINTS_DURATION,
-      textureUri: 'blocks/gold-ore.png', // Using gold for value/points
+      modelUri: 'models/items/gold-ingot.gltf', // Using gold ingot for value/points
+      modelScale: 0.6,
       pickupSoundUri: 'audio/sfx/power-up.wav',
       activateSoundUri: 'audio/sfx/correct.mp3',
       deactivateSoundUri: 'audio/sfx/ui/notification-1.mp3',
