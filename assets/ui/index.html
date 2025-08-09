@@ -3018,19 +3018,6 @@ and also configure additional buttons for mobile compatibility.
     // Show the start screen initially
     showScreen(startScreen);
     // console.log('[UI DEBUG] UI Initialized (called from initUI). Showing Start Screen.');
-
-    // Play welcome sound on load
-    try {
-      const welcomeSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/opening-voice.mp3';
-      // console.log('[UI DEBUG] Attempting to play welcome sound:', welcomeSoundPath);
-      const welcomeSound = new Audio(welcomeSoundPath);
-      welcomeSound.play().catch(error => {
-        // Keep the more detailed warning for autoplay issues
-        console.warn(`Could not autoplay welcome sound. Browser policy likely requires user interaction first. Error:`, error);
-      });
-    } catch (error) {
-      console.error('Error creating or playing welcome sound:', error); // Keep basic error
-    }
   } // End of initUI function
 
   // ** TODO: Replace DOMContentLoaded with the correct Hytopia UI initialization event **
@@ -3044,6 +3031,25 @@ and also configure additional buttons for mobile compatibility.
   setTimeout(() => {
     // console.log('[UI DEBUG] Calling initUI after timeout (fallback)');
     initUI();
+    
+    // Play welcome sound after UI initialization
+    try {
+      let welcomeSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/opening-voice.mp3';
+      
+      // Check if we're in development (localhost) but CDN URL was incorrectly replaced
+      if (window.location.hostname === 'localhost' && welcomeSoundPath.includes('play.hytopia.com')) {
+        console.log('[UI DEBUG] Fixing incorrect CDN URL for localhost development');
+        welcomeSoundPath = welcomeSoundPath.replace('https://play.hytopia.com', window.location.origin);
+      }
+      
+      console.log('[UI DEBUG] Attempting to play welcome sound:', welcomeSoundPath);
+      const welcomeSound = new Audio(welcomeSoundPath);
+      welcomeSound.play().catch(error => {
+        console.warn(`Could not autoplay welcome sound. Browser policy likely requires user interaction first. Error:`, error);
+      });
+    } catch (error) {
+      console.error('Error creating or playing welcome sound:', error);
+    }
   }, 500); // Adjust delay as needed
 
 </script>

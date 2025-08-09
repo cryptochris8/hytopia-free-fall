@@ -513,7 +513,14 @@
 
   // Play welcome sound on load
   try {
-    const welcomeSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/opening-voice.mp3';
+    let welcomeSoundPath = '{{CDN_ASSETS_URL}}/audio/sfx/ui/opening-voice.mp3';
+    
+    // Check if we're in development (localhost) but CDN URL was incorrectly replaced
+    if (window.location.hostname === 'localhost' && welcomeSoundPath.includes('play.hytopia.com')) {
+      console.log('[Mobile] Fixing incorrect CDN URL for localhost development');
+      welcomeSoundPath = welcomeSoundPath.replace('https://play.hytopia.com', window.location.origin);
+    }
+    
     const welcomeSound = new Audio(welcomeSoundPath);
     
     // Track when opening voice ends
