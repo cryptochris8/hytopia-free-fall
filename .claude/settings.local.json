@@ -1,16 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun run:*)",
-      "Bash(timeout 10 bun run:*)",
+      "Bash(npm run:*)",
+      "Bash(timeout 10 npm run:*)",
       "Bash(git push:*)",
-      "Bash(bun remove:*)",
-      "Bash(bun add:*)",
-      "Bash(bun:*)",
+      "Bash(npm remove:*)",
+      "Bash(npm install:*)",
+      "Bash(npm:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "WebFetch(domain:dev.hytopia.com)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git stash:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
